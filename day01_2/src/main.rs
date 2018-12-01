@@ -1,13 +1,27 @@
 #![feature(cell_update)]
 
 const PUZZLE: &str = include_str!("input.txt");
-use std::cell::Cell;
-use std::collections::HashSet;
+
+use std::{
+    cell::Cell,
+    collections::HashSet,
+};
 
 fn main() {
     let mut set = HashSet::new();
 
-    let frequency = Cell::new(0);
+    let answer = PUZZLE
+        .lines()
+        .filter_map(|s| s.parse::<isize>().ok())
+        .cycle()
+        .scan(Cell::new(0), |frequency, n| {
+            Some(frequency.update(|old| old + n))
+        }).find(|n| !set.insert(*n));
+
+    println!("{:?}", answer);
+}
+/*
+let frequency = Cell::new(0);
 
     PUZZLE
         .lines()
@@ -19,4 +33,4 @@ fn main() {
         });
 
     println!("{:?}", frequency);
-}
+*/
