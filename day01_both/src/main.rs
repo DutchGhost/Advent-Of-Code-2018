@@ -1,8 +1,4 @@
-#![feature(cell_update)]
-
-extern crate itertools;
-
-use itertools::Itertools;
+#![feature(cell_update, as_cell)]
 
 const PUZZLE: &str = include_str!("input.txt");
 
@@ -19,16 +15,13 @@ fn main() {
 
     let set = cumulative_sums.iter().cloned().collect::<HashSet<_>>();
 
-    let part2 = loop {
-        match cumulative_sums
-            .iter_mut()
-            .update(|n| {
-                **n += finalsum;
-            }).find(|n| set.contains(n))
-        {
-            Some(n) => break *n,
-            _ => continue,
-        }
-    };
+    let slice = Cell::from_mut(cumulative_sums.as_mut_slice()).as_slice_of_cells();
+
+    let part2 = slice
+        .iter()
+        .cycle()
+        .map(|n| n.update(|old| old + finalsum))
+        .find(|n| set.contains(&n));
+
     println!("part1: {:?} part2: {:?}", finalsum, part2);
 }
