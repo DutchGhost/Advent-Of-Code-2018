@@ -43,8 +43,6 @@ fn is_match(box1: []const u8, box2: []const u8) ?IDMatcher {
 }
 
 fn solve() !IDMatcher {
-    var twos: u32 = 0;
-    var threes: u32 = 0;
 
     var allocator = heap.DirectAllocator.init();
     defer allocator.deinit();
