@@ -74,5 +74,5 @@ fn solve() !IDMatcher {
 pub fn main() !void {
     const answer = try solve();
 
-    std.debug.warn("part 1: {}{}\n", answer.s1, answer.s2);
+    std.debug.warn("part 2: {}{}\n", answer.s1, answer.s2);
 }
