@@ -1,9 +1,6 @@
 #![feature(never_type)]
 
-use std::{
-    collections::{HashSet},
-    str::FromStr,
-};
+use std::{collections::HashSet, str::FromStr};
 
 const PUZZLE: &str = include_str!("input.txt");
 
@@ -124,13 +121,18 @@ fn main() {
         grid.push_id(line.parse::<ID>().unwrap());
     }
 
-    for row in grid.grid {
-        for cell in row {
-            if cell.id != 0 {
-                if !grid.overlapped.contains(&cell.id) {
-                    println!("part2: {:?}", cell.id);
-                }
-            }
-        }
-    }
+    let Grid {
+        grid,
+        height: _,
+        width: _,
+        overlapped,
+    } = grid;
+
+    let non_overlapping = grid
+        .into_iter()
+        .flatten()
+        .filter(|cell| cell.id != 0)
+        .find(|cell| overlapped.contains(&cell.id));
+        
+    println!("{:?}", non_overlapping);
 }
