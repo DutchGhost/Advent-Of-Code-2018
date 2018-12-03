@@ -1,10 +1,13 @@
 #![feature(never_type)]
 
+use lazy_static::lazy_static;
+use regex::Regex;
+
 use std::{collections::HashSet, str::FromStr};
 
 const PUZZLE: &str = include_str!("input.txt");
 
-#[derive(Debug, Clone, Copy, Eq, PartialEq, Hash)]
+#[derive(Debug, Hash)]
 struct ID {
     id: usize,
     from_left: usize,
@@ -13,102 +16,57 @@ struct ID {
     height: usize,
 }
 
+lazy_static! {
+    static ref ID_REGEX: Regex = Regex::new(r"(\d+) @ (\d+),(\d+): (\d+)x(\d+)").unwrap();
+}
+
 impl FromStr for ID {
     type Err = !;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        let mut yank_id = s.split(" @");
-        let mut id_part = yank_id.next().expect("Failed to parse id part");
-        id_part = &id_part[1..];
-
-        let rest = yank_id.next().expect("Failed to parse the rest");
-
-        let mut yank_from_left = rest.split(",");
-        let from_left = yank_from_left
-            .next()
-            .expect("Failed to parse from_left part");
-
-        let rest = yank_from_left.next().expect("Failed to parse the rest");
-
-        let mut yank_from_top = rest.split(": ");
-        let from_top = yank_from_top.next().expect("Failed to parse from_top");
-
-        let rest = yank_from_top.next().expect("Failed to parse the rest");
-
-        let mut yank_width = rest.split("x");
-        let width = yank_width.next().expect("Failed to parse width");
-        let height = yank_width.next().expect("Failed to parse height");
-
+        let captures = ID_REGEX.captures(s).unwrap();
         Ok(Self {
-            id: id_part.trim().parse().unwrap(),
-            from_left: from_left.trim().parse().unwrap(),
-            from_top: from_top.parse().unwrap(),
-            width: width.parse().unwrap(),
-            height: height.parse().unwrap(),
+            id: captures[1].parse().unwrap(),
+            from_left: captures[2].parse().unwrap(),
+            from_top: captures[3].parse().unwrap(),
+            width: captures[4].parse().unwrap(),
+            height: captures[5].parse().unwrap(),
         })
     }
 }
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Default)]
 struct Entry {
     id: usize,
     value: usize,
 }
 
-struct Grid {
-    height: usize,
-    width: usize,
+pub struct Grid {
+    /// Represents the grid. This is 1000 by 1000.
     grid: Vec<Vec<Entry>>,
+
+    /// Represents the id's that overlapped.
     overlapped: HashSet<usize>,
 }
 
 impl Grid {
-    fn new() -> Self {
+    pub fn new() -> Self {
         Self {
-            height: 0,
-            width: 0,
-            grid: Vec::new(),
+            grid: vec![vec![Entry::default(); 1000]; 1000],
             overlapped: HashSet::new(),
         }
     }
-    fn width_extend_to_fit(&mut self, id: &ID) {
-        let id_size = id.from_left + id.width;
-        if self.width < id_size {
-            let to_grow = id_size - self.width;
 
-            for row in self.grid.iter_mut() {
-                row.extend((0..to_grow).map(|_| Entry { id: 0, value: 0 }));
-            }
-
-            self.width += to_grow;
-        }
-    }
-
-    fn height_extend_to_fit(&mut self, id: &ID) {
-        let id_height = id.from_top + id.height;
-
-        if self.height < id_height {
-            let to_grow = id_height - self.height;
-            let width = self.width;
-
-            self.grid
-                .extend((0..to_grow).map(|_| vec![Entry { id: 0, value: 0 }; width]));
-
-            self.height += to_grow;
-        }
-    }
     fn push_id(&mut self, id: ID) {
-        self.width_extend_to_fit(&id);
-        self.height_extend_to_fit(&id);
-
-        for row in &mut self.grid[id.from_top..id.from_top + id.height].iter_mut() {
+        for row in &mut self.grid[id.from_top..id.from_top + id.height] {
             for cell in &mut row[id.from_left..id.from_left + id.width] {
-                cell.value += 1;
-                if cell.value > 1 {
+                if cell.value == 0 {
+                    cell.value = 1;
+                    cell.id = id.id;
+                } else {
                     self.overlapped.insert(cell.id);
                     self.overlapped.insert(id.id);
                 }
-                cell.id = id.id;
             }
         }
     }
@@ -117,22 +75,17 @@ impl Grid {
 fn main() {
     let mut grid = Grid::new();
 
-    for line in PUZZLE.lines() {
-        grid.push_id(line.parse::<ID>().unwrap());
+    for id in PUZZLE.lines().map(ID::from_str).filter_map(Result::ok) {
+        grid.push_id(id);
     }
 
-    let Grid {
-        grid,
-        height: _,
-        width: _,
-        overlapped,
-    } = grid;
+    let Grid { grid, overlapped } = grid;
 
-    let non_overlapping = grid
+    let overlappedd = grid
         .into_iter()
         .flatten()
         .filter(|cell| cell.id != 0)
-        .find(|cell| overlapped.contains(&cell.id));
-        
-    println!("{:?}", non_overlapping);
+        .find(|cell| !overlapped.contains(&cell.id));
+
+    println!("{:?}", overlappedd);
 }

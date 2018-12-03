@@ -5,3 +5,5 @@ authors = ["Dodo <kasper199914@gmail.com>"]
 edition = "2018"
 
 [dependencies]
+lazy_static = "*"
+regex = "*"

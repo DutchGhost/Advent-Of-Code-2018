@@ -1,6 +1,9 @@
 #![feature(never_type)]
 
-use std::str::FromStr;
+use lazy_static::lazy_static;
+use regex::Regex;
+
+use std::{str::FromStr};
 
 const PUZZLE: &str = include_str!("input.txt");
 
@@ -13,105 +16,60 @@ struct ID {
     height: usize,
 }
 
+lazy_static! {
+    static ref ID_REGEX: Regex = Regex::new(r"(\d+) @ (\d+),(\d+): (\d+)x(\d+)").unwrap();
+}
+
 impl FromStr for ID {
     type Err = !;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        let mut yank_id = s.split(" @");
-        let mut id_part = yank_id.next().expect("Failed to parse id part");
-        id_part = &id_part[1..];
-
-        let rest = yank_id.next().expect("Failed to parse the rest");
-
-        let mut yank_from_left = rest.split(",");
-        let from_left = yank_from_left
-            .next()
-            .expect("Failed to parse from_left part");
-
-        let rest = yank_from_left.next().expect("Failed to parse the rest");
-
-        let mut yank_from_top = rest.split(": ");
-        let from_top = yank_from_top.next().expect("Failed to parse from_top");
-
-        let rest = yank_from_top.next().expect("Failed to parse the rest");
-
-        let mut yank_width = rest.split("x");
-        let width = yank_width.next().expect("Failed to parse width");
-        let height = yank_width.next().expect("Failed to parse height");
-
+        let captures = ID_REGEX.captures(s).unwrap();
         Ok(Self {
-            id: id_part.trim().parse().unwrap(),
-            from_left: from_left.trim().parse().unwrap(),
-            from_top: from_top.parse().unwrap(),
-            width: width.parse().unwrap(),
-            height: height.parse().unwrap(),
+            id: captures[1].parse().unwrap(),
+            from_left: captures[2].parse().unwrap(),
+            from_top: captures[3].parse().unwrap(),
+            width: captures[4].parse().unwrap(),
+            height: captures[5].parse().unwrap(),
         })
     }
 }
 
-struct Grid {
-    height: usize,
-    width: usize,
-    grid: Vec<Vec<usize>>,
+pub struct Grid {
+    grid: Vec<Vec<u8>>,
+
 }
 
 impl Grid {
     pub fn new() -> Self {
         Self {
-            height: 0,
-            width: 0,
-            grid: Vec::new(),
-        }
-    }
-    fn width_extend_to_fit(&mut self, id: &ID) {
-        let id_size = id.from_left + id.width;
-        if self.width < id_size {
-            let to_grow = id_size - self.width;
-
-            for row in self.grid.iter_mut() {
-                row.extend((0..to_grow).map(|_| 0));
-            }
-
-            self.width += to_grow;
+            grid: vec![vec![0; 1000]; 1000],
         }
     }
 
-    fn height_extend_to_fit(&mut self, id: &ID) {
-        let id_height = id.from_top + id.height;
-
-        if self.height < id_height {
-            let to_grow = id_height - self.height;
-            let width = self.width;
-
-            self.grid.extend((0..to_grow).map(|_| vec![0; width]));
-
-            self.height += to_grow;
-        }
-    }
     fn push_id(&mut self, id: ID) {
-        self.width_extend_to_fit(&id);
-        self.height_extend_to_fit(&id);
-
-        for row in &mut self.grid[id.from_top..id.from_top + id.height].iter_mut() {
+        for row in &mut self.grid[id.from_top..id.from_top + id.height] {
             for cell in &mut row[id.from_left..id.from_left + id.width] {
                 *cell += 1;
             }
         }
     }
 }
+
 fn main() {
     let mut grid = Grid::new();
 
-    for line in PUZZLE.lines() {
-        grid.push_id(line.parse::<ID>().unwrap());
+    for id in PUZZLE.lines().map(ID::from_str).filter_map(Result::ok) {
+        grid.push_id(id);
     }
 
-    let total = grid
-        .grid
+    let Grid { grid } = grid;
+
+    let num_of_squares = grid
         .into_iter()
         .flatten()
         .filter(|cell| *cell > 1)
         .count();
 
-    println!("{}", total);
+    println!("{:?}", num_of_squares);
 }
