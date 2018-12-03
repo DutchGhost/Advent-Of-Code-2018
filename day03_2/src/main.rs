@@ -81,11 +81,11 @@ fn main() {
 
     let Grid { grid, overlapped } = grid;
 
-    let overlappedd = grid
+    let not_overlappedd = grid
         .into_iter()
         .flatten()
         .filter(|cell| cell.id != 0)
         .find(|cell| !overlapped.contains(&cell.id));
 
-    println!("{:?}", overlappedd);
+    println!("{:?}", not_overlappedd);
 }
