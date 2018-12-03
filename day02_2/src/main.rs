@@ -1,4 +1,4 @@
-const PUZZLE: &str = include_str!("input.txt");
+use aoc::aoc;
 
 #[derive(Default)]
 struct IDMatcher<'a> {
@@ -24,8 +24,9 @@ impl<'a> IDMatcher<'a> {
     }
 }
 
-fn main() {
-    let boxes = PUZZLE.lines().collect::<Vec<_>>();
+#[aoc(2018, 2, 2)]
+fn main(input: &str) -> String {
+    let boxes = input.lines().collect::<Vec<_>>();
 
     let common = boxes
         .iter()
@@ -37,5 +38,5 @@ fn main() {
         }).next()
         .expect("Failed to find it.");
 
-    println!("{}{}", common.s1, common.s2);
+    format!("{}{}", common.s1, common.s2)
 }

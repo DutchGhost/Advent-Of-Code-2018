@@ -1,36 +1,22 @@
 #![feature(cell_update)]
 
-const PUZZLE: &str = include_str!("input.txt");
+use aoc::aoc;
 
 use std::{
     cell::Cell,
     collections::HashSet,
 };
 
-fn main() {
+#[aoc(2018, 1, 2)]
+fn main(input: &str) -> Option<isize> {
     let mut set = HashSet::new();
 
-    let answer = PUZZLE
+    input
         .lines()
         .filter_map(|s| s.parse::<isize>().ok())
         .cycle()
         .scan(Cell::new(0), |frequency, n| {
             Some(frequency.update(|old| old + n))
-        }).find(|n| !set.insert(*n));
+        }).find(|n| !set.insert(*n))
 
-    println!("{:?}", answer);
 }
-/*
-let frequency = Cell::new(0);
-
-    PUZZLE
-        .lines()
-        .flat_map(|s| s.parse::<isize>().ok())
-        .cycle()
-        .take_while(|_| set.insert(frequency.get()))
-        .for_each(|n| {
-            frequency.update(|old| old + n);
-        });
-
-    println!("{:?}", frequency);
-*/

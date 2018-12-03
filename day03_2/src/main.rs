@@ -1,11 +1,10 @@
 #![feature(never_type)]
 
+use aoc::aoc;
 use lazy_static::lazy_static;
 use regex::Regex;
 
 use std::{collections::HashSet, str::FromStr};
-
-const PUZZLE: &str = include_str!("input.txt");
 
 #[derive(Debug, Hash)]
 struct ID {
@@ -72,20 +71,19 @@ impl Grid {
     }
 }
 
-fn main() {
+#[aoc(2018, 3, 2)]
+fn main(input: &str) -> Option<Entry> {
     let mut grid = Grid::new();
 
-    for id in PUZZLE.lines().map(ID::from_str).filter_map(Result::ok) {
+    for id in input.lines().map(ID::from_str).filter_map(Result::ok) {
         grid.push_id(id);
     }
 
     let Grid { grid, overlapped } = grid;
 
-    let not_overlappedd = grid
+    grid
         .into_iter()
         .flatten()
         .filter(|cell| cell.id != 0)
-        .find(|cell| !overlapped.contains(&cell.id));
-
-    println!("{:?}", not_overlappedd);
+        .find(|cell| !overlapped.contains(&cell.id))
 }

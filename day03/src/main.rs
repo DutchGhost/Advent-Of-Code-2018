@@ -1,11 +1,10 @@
 #![feature(never_type)]
 
+use aoc::aoc;
 use lazy_static::lazy_static;
 use regex::Regex;
 
 use std::{str::FromStr};
-
-const PUZZLE: &str = include_str!("input.txt");
 
 #[derive(Debug)]
 struct ID {
@@ -56,20 +55,19 @@ impl Grid {
     }
 }
 
-fn main() {
+#[aoc(2018, 3, 1)]
+fn main(input: &str) -> usize {
     let mut grid = Grid::new();
 
-    for id in PUZZLE.lines().map(ID::from_str).filter_map(Result::ok) {
+    for id in input.lines().map(ID::from_str).filter_map(Result::ok) {
         grid.push_id(id);
     }
 
     let Grid { grid } = grid;
 
-    let num_of_squares = grid
+    grid
         .into_iter()
         .flatten()
         .filter(|cell| *cell > 1)
-        .count();
-
-    println!("{:?}", num_of_squares);
+        .count()
 }

@@ -1,17 +1,18 @@
-const PUZZLE: &str = include_str!("input.txt");
+use aoc::aoc;
 
 use std::{
     collections::HashMap,
 };
 
-fn main() {
+#[aoc(2018, 2, 1)]
+fn main(input: &str) -> usize {
     let mut frequencies = HashMap::new();
     let mut v = Vec::new();
 
     let mut twos = 0;
     let mut threes = 0;
 
-    for line in PUZZLE.lines() {
+    for line in input.lines() {
         for c in line.chars() {
             *frequencies.entry(c).or_insert(0) += 1;
         }
@@ -25,6 +26,6 @@ fn main() {
             if n == 2 { twos += 1 } else { threes += 1 }
         }
     }
-
-    println!("{}", twos * threes);
+    
+    twos * threes
 }
