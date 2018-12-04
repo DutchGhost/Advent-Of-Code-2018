@@ -1,14 +1,11 @@
 use aoc::aoc;
 
 use chrono::{
-    naive::{NaiveDate, NaiveDateTime, NaiveTime},
+    naive::{NaiveDateTime, NaiveTime},
     Duration,
 };
 
-use lazy_static::lazy_static;
-use regex::Regex;
-
-use std::collections::HashMap;
+use std::{collections::HashMap, str::FromStr};
 
 #[derive(Debug, Hash, Copy, Clone)]
 enum Action {
@@ -39,48 +36,43 @@ impl Action {
     }
 }
 
-lazy_static! {
-    static ref MATCHER: Regex =
-        Regex::new(r"(\d+)-(\d+)-(\d+) (\d+):(\d+)] [(\w?\s)|#(\d+)]+").unwrap();
-    static ref INT_PARSE: Regex = Regex::new(r"#(\d+)").unwrap();
-}
-
-fn parse(s: &str) -> Action {
-    let caps = MATCHER.captures(s).unwrap();
-
-    let year = caps[1].parse().unwrap();
-    let month = caps[2].parse().unwrap();
-    let day = caps[3].parse().unwrap();
-    let hour = caps[4].parse().unwrap();
-    let min = caps[5].parse().unwrap();
-
-    let date = NaiveDate::from_ymd(year, month, day).and_hms(hour, min, 0);
-
-    if s.contains("falls") {
-        Action::Asleep(date)
-    } else if s.contains("wakes") {
-        Action::Wake(date)
-    } else {
-        let nums = INT_PARSE.captures(s).unwrap();
-        Action::Begin(date, nums[1].parse().unwrap())
-    }
-}
-
-fn minutes_asleep(schedule: &Vec<Action>) -> Duration {
-    sleep_periods(schedule)
-        .map(|period| period.end - period.start)
-        .fold(Duration::zero(), |current_min_asleep, slept| {
-            current_min_asleep + slept
-        })
-}
-
 #[derive(Debug)]
 struct SleepPeriod {
     start: NaiveTime,
     end: NaiveTime,
 }
 
-fn actions_per_guard(actions: Vec<Action>) -> HashMap<usize, Vec<Action>> {
+impl SleepPeriod {
+    fn contains(&self, other: NaiveTime) -> bool {
+        other >= self.start && other < self.end
+    }
+
+    fn duration(&self) -> Duration {
+        self.end - self.start
+    }
+}
+
+impl FromStr for Action {
+    type Err = ();
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        let (date, action) = s.split_at(18);
+        let date = NaiveDateTime::parse_from_str(date, "[%Y-%m-%d %H:%M]").unwrap();
+
+        Ok(match &action[1..] {
+            "falls asleep" => Action::Asleep(date),
+            "wakes up" => Action::Wake(date),
+            _ => {
+                let guard_id = action.split_whitespace().nth(1).unwrap()[1..]
+                    .parse()
+                    .unwrap();
+                Action::Begin(date, guard_id)
+            }
+        })
+    }
+}
+
+fn build_sleep_schedules(actions: Vec<Action>) -> HashMap<usize, Vec<Action>> {
     let mut schedule = HashMap::new();
 
     let mut current: &mut Vec<Action> = &mut Vec::new();
@@ -98,7 +90,13 @@ fn actions_per_guard(actions: Vec<Action>) -> HashMap<usize, Vec<Action>> {
     schedule
 }
 
-fn sleep_periods<'a>(v: &'a [Action]) -> impl Iterator<Item = SleepPeriod> + 'a {
+fn minutes_asleep(schedule: &[Action]) -> Duration {
+    sleep_pattern(schedule).fold(Duration::zero(), |current_min_asleep, period| {
+        current_min_asleep + period.duration()
+    })
+}
+
+fn sleep_pattern<'a>(v: &'a [Action]) -> impl Iterator<Item = SleepPeriod> + 'a {
     v.windows(2)
         .map(|actions| (actions[0], actions[1]))
         .filter(|(action1, action2)| action1.is_asleep() && action2.is_awake())
@@ -110,33 +108,32 @@ fn sleep_periods<'a>(v: &'a [Action]) -> impl Iterator<Item = SleepPeriod> + 'a 
 
 #[aoc(2018, 4, 1)]
 fn main(input: &str) -> usize {
-    let mut v = input.lines().map(parse).collect::<Vec<_>>();
+    let mut v: Vec<Action> = input
+        .lines()
+        .map(Action::from_str)
+        .filter_map(Result::ok)
+        .collect::<Vec<_>>();
 
     v.sort_by_key(|e| match e {
         &Action::Begin(date, _) | &Action::Asleep(date) | &Action::Wake(date) => date,
     });
 
-    let (guard, longest_sleep) = actions_per_guard(v)
+    let (sleepiest_guard, sleeping_schedule) = build_sleep_schedules(v)
         .into_iter()
         .max_by_key(|(_, v)| minutes_asleep(&v))
         .unwrap();
 
-    let sleep_periods = sleep_periods(&longest_sleep).collect::<Vec<_>>();
+    let minute = (1..60)
+        .map(|minute| {
+            let time = NaiveTime::from_hms(0, minute, 0);
+            let frequency = sleep_pattern(&sleeping_schedule)
+                .filter(|span| span.contains(time))
+                .count();
 
-    let minute = (0..60usize)
-        .map(|min| {
-            let time = NaiveTime::from_hms(0, min as u32, 0);
-
-            (
-                min,
-                sleep_periods
-                    .iter()
-                    .filter(|span| time >= span.start && time < span.end)
-                    .count(),
-            )
-        }).max_by_key(|&(_, count)| count)
-        .map(|(min, _)| min)
+            (minute, frequency)
+        }).max_by_key(|&(_, frequency)| frequency)
+        .map(|(minute, _)| minute as usize)
         .unwrap();
 
-    minute * guard
+    minute * sleepiest_guard
 }
