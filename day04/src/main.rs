@@ -123,7 +123,7 @@ fn main(input: &str) -> usize {
         .max_by_key(|(_, v)| minutes_asleep(&v))
         .unwrap();
 
-    let minute = (1..60)
+    let minute = (0..60)
         .map(|minute| {
             let time = NaiveTime::from_hms(0, minute, 0);
             let frequency = sleep_pattern(&sleeping_schedule)
