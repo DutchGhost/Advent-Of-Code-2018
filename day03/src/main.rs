@@ -4,7 +4,7 @@ use aoc::aoc;
 use lazy_static::lazy_static;
 use regex::Regex;
 
-use std::{str::FromStr};
+use std::str::FromStr;
 
 #[derive(Debug)]
 struct ID {
@@ -36,7 +36,6 @@ impl FromStr for ID {
 
 pub struct Grid {
     grid: Vec<Vec<u8>>,
-
 }
 
 impl Grid {
@@ -65,9 +64,5 @@ fn main(input: &str) -> usize {
 
     let Grid { grid } = grid;
 
-    grid
-        .into_iter()
-        .flatten()
-        .filter(|cell| *cell > 1)
-        .count()
+    grid.into_iter().flatten().filter(|cell| *cell > 1).count()
 }

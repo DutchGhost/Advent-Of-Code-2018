@@ -2,10 +2,7 @@
 
 use aoc::aoc;
 
-use std::{
-    cell::Cell,
-    collections::HashSet,
-};
+use std::{cell::Cell, collections::HashSet};
 
 #[aoc(2018, 1, 2)]
 fn main(input: &str) -> Option<isize> {
@@ -18,5 +15,4 @@ fn main(input: &str) -> Option<isize> {
         .scan(Cell::new(0), |frequency, n| {
             Some(frequency.update(|old| old + n))
         }).find(|n| !set.insert(*n))
-
 }

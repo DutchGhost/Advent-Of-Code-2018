@@ -1,8 +1,6 @@
 use aoc::aoc;
 
-use std::{
-    collections::HashMap,
-};
+use std::collections::HashMap;
 
 #[aoc(2018, 2, 1)]
 fn main(input: &str) -> usize {
@@ -23,9 +21,13 @@ fn main(input: &str) -> usize {
         v.dedup();
 
         for n in v.drain(..) {
-            if n == 2 { twos += 1 } else { threes += 1 }
+            if n == 2 {
+                twos += 1
+            } else {
+                threes += 1
+            }
         }
     }
-    
+
     twos * threes
 }

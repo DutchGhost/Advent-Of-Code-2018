@@ -1,8 +1,6 @@
 use aoc::aoc;
 
-use chrono::{
-    naive::{NaiveDateTime, NaiveTime},
-};
+use chrono::naive::{NaiveDateTime, NaiveTime};
 
 use std::{collections::HashMap, str::FromStr};
 
@@ -127,8 +125,7 @@ fn main(input: &str) -> usize {
             let (sleepiest_minute, frequency) = most_frequent_minute(&scheds, &mut buffer);
             buffer.clear();
             (guard, sleepiest_minute, frequency)
-        })
-        .max_by_key(|&(_, _, most_frequent)| most_frequent)
+        }).max_by_key(|&(_, _, most_frequent)| most_frequent)
         .map(|(guard, sleepiest_minute, _)| (guard, sleepiest_minute))
         .unwrap();
 

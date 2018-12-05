@@ -81,8 +81,7 @@ fn main(input: &str) -> Option<Entry> {
 
     let Grid { grid, overlapped } = grid;
 
-    grid
-        .into_iter()
+    grid.into_iter()
         .flatten()
         .filter(|cell| cell.id != 0)
         .find(|cell| !overlapped.contains(&cell.id))
