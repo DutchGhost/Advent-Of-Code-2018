@@ -11,10 +11,10 @@ fn complement(c: char) -> char {
 fn react(input: impl Iterator<Item = char>) -> usize {
     let mut stack = String::new();
     for c in input {
-        match stack.chars().last().filter(|last| *last == complement(c)) {
-            // Need the drop here to make the match arm happy.
-            Some(_) => drop(stack.pop()),
-            None => stack.push(c),
+        if stack.ends_with(complement(c)) {
+            stack.pop();
+        } else {
+            stack.push(c)
         }
     }
 
