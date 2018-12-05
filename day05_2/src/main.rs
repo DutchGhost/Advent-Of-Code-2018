@@ -25,18 +25,16 @@ fn is_filter_char(c: char, filter_char: char) -> bool {
 }
 
 #[aoc(2018, 5, 1)]
-fn main(input: &str) -> Option<usize> {
+fn main(input: &str) -> usize {
     let input = input.trim();
+    let mut len = std::usize::MAX;
     let mut buffer = String::new();
 
-    (97..=122u8)
-        .map(|b| b as char)
-        .map(|filter_char| {
-            let len = react(
-                input.chars().filter(|c| !is_filter_char(*c, filter_char)),
-                &mut buffer,
-            );
-            buffer.clear();
-            len
-        }).min()
+    for filter_char in (97..=122u8).map(|c| c as char) {
+        let iter = input.chars().filter(|c| !is_filter_char(*c, filter_char));
+        len = std::cmp::min(len, react(iter, &mut buffer));
+        buffer.clear();
+    }
+
+    len
 }
