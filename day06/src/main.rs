@@ -36,6 +36,7 @@ fn coordinates(x: isize, y: isize) -> impl Iterator<Item = (isize, isize)> {
         From the locationsmap, increment the points area counter.
     Lastly, iterate over the locationsmap, filter out the locations that are infinite, find the max, and return it.
 */
+
 #[aoc(2018, 6, 1)]
 fn main(input: &str) -> Option<usize> {
     let points = input.lines().map(Point::from_str).collect::<Vec<_>>();
