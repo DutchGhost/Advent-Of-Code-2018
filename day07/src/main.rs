@@ -3,40 +3,34 @@ use aoc::aoc;
 use std::collections::{HashMap, HashSet};
 
 fn parse(s: &str) -> (char, char) {
-    let mut pre = s.chars().skip(5);
-    let mut post = s.chars().skip(36);
+    let mut dependency = s.chars().skip(5);
+    let mut task = s.chars().skip(36);
 
-    (pre.next().unwrap(), post.next().unwrap())
+    (dependency.next().unwrap(), task.next().unwrap())
 }
 
-fn solve(mut instructions: HashMap<char, HashSet<char>>) -> String {
+fn solve(mut tasks: HashMap<char, HashSet<char>>) -> String {
     let mut answer = String::new();
-
-    let mut steps = HashSet::new();
-
-    for (pre, posts) in instructions.iter() {
-        steps.insert(*pre);
-        steps.extend(posts.iter().cloned());
-    }
-
-    let mut posts = HashSet::new();
     let mut candidates: Vec<char> = Vec::new();
 
-    while !steps.is_empty() {
-        for (_, post) in instructions.iter() {
-            posts.extend(post.iter().cloned());
-        }
+    while !tasks.is_empty() {
+        candidates.extend(
+            tasks
+                .iter()
+                .filter(|(_, dependencies)| dependencies.is_empty())
+                .map(|(task, _)| task.clone()),
+        );
 
-        candidates.extend(steps.difference(&posts).cloned());
         candidates.sort();
-        let n = candidates[0];
+        let task = candidates[0];
         candidates.clear();
-        answer.push(n);
+        answer.push(task);
 
-        instructions.remove(&n);
+        tasks.remove(&task);
 
-        steps.remove(&n);
-        posts.clear();
+        for (_, dependencies) in &mut tasks {
+            dependencies.remove(&task);
+        }
     }
 
     answer
@@ -44,12 +38,35 @@ fn solve(mut instructions: HashMap<char, HashSet<char>>) -> String {
 
 #[aoc(2018, 7, 1)]
 fn main(input: &str) -> String {
-    let mut map = HashMap::new();
+    let mut task_dependency_map = HashMap::new();
 
+    // add tasks and dependencies to the task_dependency_map
     for line in input.lines() {
-        let (pre, post) = parse(line);
+        let (dependency, task) = parse(line);
 
-        map.entry(pre).or_insert(HashSet::new()).insert(post);
+        task_dependency_map
+            .entry(task)
+            .or_insert(HashSet::new())
+            .insert(dependency);
     }
-    solve(map)
+
+    let mut are_dependencies_only = Vec::new();
+
+    // find the things which are not tasks, but *only* a dependency
+    for (_, dependencies) in task_dependency_map.iter() {
+        for dependency in dependencies.iter() {
+            if !task_dependency_map.contains_key(dependency) {
+                are_dependencies_only.push(*dependency);
+            }
+        }
+    }
+
+    // The ones which are dependency only, but not a task, depend on an empty dependency list.
+    for dependency in are_dependencies_only {
+        task_dependency_map
+            .entry(dependency)
+            .or_insert(HashSet::new());
+    }
+
+    solve(task_dependency_map)
 }
