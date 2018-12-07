@@ -1,6 +1,6 @@
 use aoc::aoc;
 
-#[derive(Debug, Copy, Clone, Default, Hash)]
+#[derive(Debug, Copy, Clone)]
 struct Point {
     x: isize,
     y: isize,
@@ -16,14 +16,6 @@ impl Point {
         Self { x, y }
     }
 }
-
-/*
-    Collect the points into a vec,
-
-    for each coordinate in the list,
-        sum all the manhattendistances between the coordinate and all points
-        if the sum was less than 10000, add 1 to the area's size
-*/
 
 fn coordinates(x: isize, y: isize) -> impl Iterator<Item = (isize, isize)> {
     (0..=x).flat_map(move |x| (0..=y).map(move |y| (x, y)))
@@ -49,3 +41,11 @@ fn main(input: &str) -> usize {
         }).filter(|&total_distance| total_distance < 10000)
         .count()
 }
+
+/*
+    Collect the points into a vec,
+
+    for each coordinate in the list,
+        sum all the manhattendistances between the coordinate and all points
+        if the sum was less than 10000, add 1 to the area's size
+*/

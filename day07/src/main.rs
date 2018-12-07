@@ -1,6 +1,6 @@
 use aoc::aoc;
 
-use std::collections::{HashSet, BTreeMap, HashMap};
+use std::collections::{HashMap, HashSet};
 
 fn parse(s: &str) -> (char, char) {
     let mut pre = s.chars().skip(5);
@@ -9,81 +9,47 @@ fn parse(s: &str) -> (char, char) {
     (pre.next().unwrap(), post.next().unwrap())
 }
 
-fn solve(mut instructions: Vec<Step>) {
-    let mut posts = HashSet::new();
-    let mut pres = HashSet::new();
-    
+fn solve(mut instructions: HashMap<char, HashSet<char>>) -> String {
     let mut answer = String::new();
 
-    while !instructions.is_empty() {
-        for instruction in instructions.iter() {
-            posts.extend(instruction.posts.iter().cloned());
-            pres.insert(instruction.pre);
+    let mut steps = HashSet::new();
 
-        }
-        
-        let mut lasts = pres.difference(&posts).cloned().collect::<Vec<_>>();
-        lasts.sort();
- 
-        let last = lasts[0];
-        answer.push(last);
-
-        for ins in instructions.iter_mut() {
-            ins.posts.retain(|x| x != &last);
-        }
-
-        instructions.retain(|ins| ins.pre != last);
-
-        posts.clear();
-        pres.clear();
-        println!();
-        println!("LAST {:?}", last);
-
-        for ins in instructions.iter() {
-            println!("{:?}", ins);
-        }
-
+    for (pre, posts) in instructions.iter() {
+        steps.insert(*pre);
+        steps.extend(posts.iter().cloned());
     }
 
-   // answer.extend(instructions[0].posts.drain(..));
-    println!("{:?}", instructions);
-    println!("{:?}", answer);
-}
+    let mut posts = HashSet::new();
+    let mut candidates: Vec<char> = Vec::new();
 
-#[derive(Debug)]
-struct Step {
-    pre: char,
+    while !steps.is_empty() {
+        for (_, post) in instructions.iter() {
+            posts.extend(post.iter().cloned());
+        }
 
-    posts: Vec<char>,
+        candidates.extend(steps.difference(&posts).cloned());
+        candidates.sort();
+        let n = candidates[0];
+        candidates.clear();
+        answer.push(n);
+
+        instructions.remove(&n);
+
+        steps.remove(&n);
+        posts.clear();
+    }
+
+    answer
 }
 
 #[aoc(2018, 7, 1)]
-fn main(input2: &str) {
-    let input = "Step C must be finished before step A can begin.
-Step C must be finished before step F can begin.
-Step A must be finished before step B can begin.
-Step A must be finished before step D can begin.
-Step B must be finished before step E can begin.
-Step D must be finished before step E can begin.
-Step F must be finished before step E can begin";
-    let mut map = BTreeMap::new();
+fn main(input: &str) -> String {
+    let mut map = HashMap::new();
 
     for line in input.lines() {
         let (pre, post) = parse(line);
 
         map.entry(pre).or_insert(HashSet::new()).insert(post);
     }
-
-    let mut instructions = Vec::new();
-
-    for (pre, mut posts) in map {
-        let posts = posts.into_iter().collect::<Vec<_>>();
-        instructions.push(Step { pre, posts });
-    }
-
-    for instruction in instructions.iter() {
-        println!("{:?}", instruction);
-    }
-
-    solve(instructions);
+    solve(map)
 }
