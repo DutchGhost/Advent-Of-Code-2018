@@ -50,16 +50,13 @@ fn main(input: &str) -> String {
             .insert(dependency);
     }
 
-    let mut are_dependencies_only = Vec::new();
-
     // find the things which are not tasks, but *only* a dependency
-    for (_, dependencies) in task_dependency_map.iter() {
-        for dependency in dependencies.iter() {
-            if !task_dependency_map.contains_key(dependency) {
-                are_dependencies_only.push(*dependency);
-            }
-        }
-    }
+    let are_dependencies_only = task_dependency_map
+        .values()
+        .flat_map(|dependencies| dependencies.iter())
+        .filter(|dependency| !task_dependency_map.contains_key(dependency))
+        .cloned()
+        .collect::<Vec<_>>();
 
     // The ones which are dependency only, but not a task, depend on an empty dependency list.
     for dependency in are_dependencies_only {
