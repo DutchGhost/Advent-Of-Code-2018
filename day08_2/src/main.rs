@@ -14,6 +14,7 @@ fn solve(iter: &mut impl Iterator<Item = usize>) -> usize {
         _ => 0,
     }
 }
+
 #[aoc(2018, 8, 2)]
 fn main(input: &str) -> usize {
     let mut input = input
