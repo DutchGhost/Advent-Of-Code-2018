@@ -2,8 +2,8 @@ use aoc::aoc;
 use lazy_static::lazy_static;
 use regex::Regex;
 
-use std::str::FromStr;
 use hashbrown::HashSet;
+use std::str::FromStr;
 
 #[derive(Debug, Hash)]
 struct ID {

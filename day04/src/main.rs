@@ -9,7 +9,6 @@ use hashbrown::HashMap;
 
 use std::str::FromStr;
 
-
 #[derive(Debug, Hash, Copy, Clone)]
 enum Action {
     Begin(NaiveDateTime, usize),

@@ -1,8 +1,8 @@
 #![feature(cell_update, as_cell)]
 
 use aoc::aoc;
-use std::{cell::Cell};
 use hashbrown::HashSet;
+use std::cell::Cell;
 
 #[aoc(2018, 1, 3)]
 fn main(input: &str) -> (isize, Option<isize>) {
