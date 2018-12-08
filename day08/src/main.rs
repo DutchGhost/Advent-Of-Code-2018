@@ -1,31 +1,21 @@
 use aoc::aoc;
 
-fn solve(mut iter: Vec<usize>) -> (usize, Vec<usize>) {
-    let mut sum = 0;
+fn solve2(iter: &mut impl Iterator<Item = usize>) -> usize {
+    match (iter.next(), iter.next()) {
+        (Some(child_nodes), Some(meta_nodes)) => {
+            (0..child_nodes).map(|_| solve2(iter)).sum::<usize>()
+                + iter.take(meta_nodes).sum::<usize>()
+        }
 
-    let n_child_nodes = iter.pop().unwrap();
-    let n_meta_nodes = iter.pop().unwrap();
-
-    for _ in 0..n_child_nodes {
-        let (sum2, iter2) = solve(iter);
-        sum += sum2;
-
-        iter = iter2;
+        _ => 0,
     }
-
-    for _ in 0..n_meta_nodes {
-        sum += iter.pop().unwrap();
-    }
-
-    (sum, iter)
 }
+
 #[aoc(2018, 8, 1)]
 fn main(input: &str) -> usize {
     let mut input = input
         .split_whitespace()
-        .map(|s| s.parse::<usize>().unwrap())
-        .collect::<Vec<_>>();
+        .map(|s| s.parse::<usize>().unwrap());
 
-    input.reverse();
-    solve(input).0
+    solve2(&mut input)
 }
