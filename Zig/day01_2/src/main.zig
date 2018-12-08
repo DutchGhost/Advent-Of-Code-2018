@@ -13,23 +13,26 @@ fn solve(comptime N: type) !N {
     var allocator = heap.DirectAllocator.init();
     defer allocator.deinit();
     
-    var parsed = Vec(N).init(&allocator.allocator);
+    var arena_alloc = heap.ArenaAllocator.init(&allocator.allocator);
+    defer arena_alloc.deinit();
+    
+    var parsed = Vec(N).init(&arena_alloc.allocator);
     defer parsed.deinit();
 
-    var splitter = mem.split(input, "\n");
+    comptime var splitter = comptime mem.split(input, "\n");
     
-    while(splitter.next()) |slice| {
-        var num = try fmt.parseInt(N, slice, 10);
+    inline while(comptime splitter.next()) |slice| {
+        const num = comptime try fmt.parseInt(N, slice, 10);
         try parsed.append(num);
     }
 
-    var set = map.AutoHashMap(N, void).init(&allocator.allocator);
+    var set = map.AutoHashMap(N, void).init(&arena_alloc.allocator);
     defer set.deinit();
  
     while (true) {
 
-        for(parsed.toSlice()) |num| {
-            frequency += num;
+        for(parsed.toSliceConst()) |*num| {
+            frequency += num.*;
             const entry = try set.getOrPut(frequency);
             if (entry.found_existing) {
                 return entry.kv.key;
@@ -39,6 +42,7 @@ fn solve(comptime N: type) !N {
 }
 
 pub fn main() !void {
+    @setEvalBranchQuota(500000);
     const answer = try solve(i32);
 
     std.debug.warn("part 2: {}\n", answer);    
