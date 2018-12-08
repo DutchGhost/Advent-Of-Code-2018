@@ -27,7 +27,7 @@ impl Worker {
         Self {
             work: None,
             ticks_left: 0,
-            default_ticks: default_ticks,
+            default_ticks,
         }
     }
 
@@ -39,7 +39,7 @@ impl Worker {
     pub fn poll(&mut self) -> Option<Poll<char>> {
         self.ticks_left = self.ticks_left.saturating_sub(1);
         if self.ticks_left == 0 {
-            self.work.take().map(|w| Poll::Ready(w))
+            self.work.take().map(Poll::Ready)
         } else {
             Some(Poll::NotReady)
         }
@@ -73,7 +73,7 @@ fn solve(
                 Some(Poll::Ready(task_complete)) => {
                     output.push(task_complete);
 
-                    for (_, dependencies) in &mut tasks {
+                    for dependencies in tasks.values_mut() {
                         dependencies.remove(&task_complete);
                     }
 
@@ -119,7 +119,7 @@ fn solve(
         }
     }
 
-    return tick - 1;
+    tick - 1
 }
 
 #[aoc(2018, 7, 2)]
@@ -132,7 +132,7 @@ fn main(input: &str) -> usize {
 
         task_dependency_map
             .entry(task)
-            .or_insert(HashSet::new())
+            .or_insert_with(HashSet::new)
             .insert(dependency);
     }
 
@@ -148,7 +148,7 @@ fn main(input: &str) -> usize {
     for dependency in are_dependencies_only {
         task_dependency_map
             .entry(dependency)
-            .or_insert(HashSet::new());
+            .or_insert_with(HashSet::new);
     }
 
     solve(task_dependency_map, 5, 60)

@@ -21,12 +21,7 @@ fn react(input: impl Iterator<Item = char>) -> usize {
     stack.len()
 }
 
-use std::time::Instant;
-
 #[aoc(2018, 5, 1)]
 fn main(input: &str) -> usize {
-    let now = Instant::now();
-    let r = react(input.trim().chars());
-    println!("Time elapsed: {:?}", now.elapsed());
-    r
+    react(input.trim().chars())
 }

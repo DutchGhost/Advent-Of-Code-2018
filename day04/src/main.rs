@@ -16,22 +16,22 @@ enum Action {
 
 impl Action {
     fn is_asleep(&self) -> bool {
-        match self {
-            &Action::Asleep(_) => true,
+        match *self {
+            Action::Asleep(_) => true,
             _ => false,
         }
     }
 
     fn is_awake(&self) -> bool {
-        match self {
-            &Action::Wake(_) => true,
+        match *self {
+            Action::Wake(_) => true,
             _ => false,
         }
     }
 
     fn as_time(&self) -> NaiveTime {
-        match self {
-            &Action::Begin(time, _) | &Action::Asleep(time) | &Action::Wake(time) => time.time(),
+        match *self {
+            Action::Begin(time, _) | Action::Asleep(time) | Action::Wake(time) => time.time(),
         }
     }
 }
@@ -80,7 +80,7 @@ fn build_sleep_schedules(actions: Vec<Action>) -> HashMap<usize, Vec<Action>> {
     for action in actions {
         match action {
             Action::Begin(_, guard) => {
-                current = schedule.entry(guard).or_insert(Vec::new());
+                current = schedule.entry(guard).or_insert_with(Vec::new);
                 current.push(action);
             }
             _ => current.push(action),
@@ -114,8 +114,8 @@ fn main(input: &str) -> usize {
         .filter_map(Result::ok)
         .collect::<Vec<_>>();
 
-    v.sort_by_key(|e| match e {
-        &Action::Begin(date, _) | &Action::Asleep(date) | &Action::Wake(date) => date,
+    v.sort_by_key(|e| match *e {
+        Action::Begin(date, _) | Action::Asleep(date) | Action::Wake(date) => date,
     });
 
     let (sleepiest_guard, sleeping_schedule) = build_sleep_schedules(v)

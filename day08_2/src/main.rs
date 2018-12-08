@@ -17,9 +17,7 @@ fn solve(iter: &mut impl Iterator<Item = usize>) -> usize {
 
 #[aoc(2018, 8, 2)]
 fn main(input: &str) -> usize {
-    let mut input = input
-        .split_whitespace()
-        .map(|s| s.parse::<usize>().unwrap());
+    let mut input = input.split_whitespace().map(|s| s.parse().unwrap());
 
-    solve(&mut input)
+    solve(input.by_ref())
 }

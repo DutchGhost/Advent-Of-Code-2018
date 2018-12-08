@@ -28,12 +28,8 @@ fn filter_units<'a>(s: &'a str, unit: char) -> impl Iterator<Item = char> + 'a {
     s.chars().filter(move |&c| !is_unit_char(c, unit))
 }
 
-use std::time::Instant;
-
 #[aoc(2018, 5, 2)]
 fn main(input: &str) -> usize {
-    let now = Instant::now();
-
     let input = input.trim();
     let mut len = std::usize::MAX;
     let mut buffer = String::new();
@@ -44,6 +40,5 @@ fn main(input: &str) -> usize {
         buffer.clear();
     }
 
-    println!("Time elapsed: {:?}", now.elapsed());
     len
 }

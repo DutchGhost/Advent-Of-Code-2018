@@ -18,7 +18,7 @@ fn solve(mut tasks: HashMap<char, HashSet<char>>) -> String {
             tasks
                 .iter()
                 .filter(|(_, dependencies)| dependencies.is_empty())
-                .map(|(task, _)| task.clone()),
+                .map(|(task, _)| *task),
         );
 
         candidates.sort();
@@ -28,7 +28,7 @@ fn solve(mut tasks: HashMap<char, HashSet<char>>) -> String {
 
         tasks.remove(&task);
 
-        for (_, dependencies) in &mut tasks {
+        for dependencies in tasks.values_mut() {
             dependencies.remove(&task);
         }
     }
@@ -46,7 +46,7 @@ fn main(input: &str) -> String {
 
         task_dependency_map
             .entry(task)
-            .or_insert(HashSet::new())
+            .or_insert_with(HashSet::new)
             .insert(dependency);
     }
 
@@ -62,7 +62,7 @@ fn main(input: &str) -> String {
     for dependency in are_dependencies_only {
         task_dependency_map
             .entry(dependency)
-            .or_insert(HashSet::new());
+            .or_insert_with(HashSet::new);
     }
 
     solve(task_dependency_map)

@@ -82,7 +82,7 @@ fn main(input: &str) -> Option<usize> {
         .filter(|(k, _)| !infinites.contains(k))
         .map(|(_, size)| size)
         .max()
-        .map(|n| *n)
+        .cloned()
 }
 
 /*

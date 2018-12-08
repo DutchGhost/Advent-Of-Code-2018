@@ -1,5 +1,3 @@
-#![feature(never_type)]
-
 use aoc::aoc;
 use lazy_static::lazy_static;
 use regex::Regex;
@@ -20,7 +18,7 @@ lazy_static! {
 }
 
 impl FromStr for ID {
-    type Err = !;
+    type Err = ();
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         let captures = ID_REGEX.captures(s).unwrap();
@@ -40,6 +38,7 @@ struct Entry {
     value: usize,
 }
 
+#[derive(Default)]
 pub struct Grid {
     /// Represents the grid. This is 1000 by 1000.
     grid: Vec<Vec<Entry>>,
@@ -56,7 +55,7 @@ impl Grid {
         }
     }
 
-    fn push_id(&mut self, id: ID) {
+    fn push_id(&mut self, id: &ID) {
         for row in &mut self.grid[id.from_top..id.from_top + id.height] {
             for cell in &mut row[id.from_left..id.from_left + id.width] {
                 if cell.value == 0 {
@@ -76,7 +75,7 @@ fn main(input: &str) -> Option<Entry> {
     let mut grid = Grid::new();
 
     for id in input.lines().map(ID::from_str).filter_map(Result::ok) {
-        grid.push_id(id);
+        grid.push_id(&id);
     }
 
     let Grid { grid, overlapped } = grid;
