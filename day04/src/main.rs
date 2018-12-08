@@ -5,7 +5,10 @@ use chrono::{
     Duration,
 };
 
-use std::{collections::HashMap, str::FromStr};
+use hashbrown::HashMap;
+
+use std::str::FromStr;
+
 
 #[derive(Debug, Hash, Copy, Clone)]
 enum Action {

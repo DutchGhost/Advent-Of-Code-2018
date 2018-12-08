@@ -1,6 +1,6 @@
 use aoc::aoc;
 
-use std::collections::{HashMap, HashSet};
+use hashbrown::{HashMap, HashSet};
 
 fn parse(s: &str) -> (char, char) {
     let mut dependency = s.chars().skip(5);

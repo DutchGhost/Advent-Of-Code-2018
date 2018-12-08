@@ -1,11 +1,12 @@
 #![feature(cell_update, as_cell)]
 
-const PUZZLE: &str = include_str!("input.txt");
+use aoc::aoc;
+use std::{cell::Cell};
+use hashbrown::HashSet;
 
-use std::{cell::Cell, collections::HashSet};
-
-fn main() {
-    let mut cumulative_sums = PUZZLE
+#[aoc(2018, 1, 3)]
+fn main(input: &str) -> (isize, Option<isize>) {
+    let mut cumulative_sums = input
         .lines()
         .filter_map(|s| s.parse::<isize>().ok())
         .scan(Cell::new(0), |freq, n| Some(freq.update(|old| old + n)))
@@ -23,5 +24,5 @@ fn main() {
         .map(|n| n.update(|old| old + finalsum))
         .find(|n| set.contains(&n));
 
-    println!("part1: {:?} part2: {:?}", finalsum, part2);
+    (finalsum, part2)
 }

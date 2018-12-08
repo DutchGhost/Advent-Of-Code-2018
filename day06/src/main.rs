@@ -1,6 +1,6 @@
 use aoc::aoc;
 
-use std::collections::{HashMap, HashSet};
+use hashbrown::{HashMap, HashSet};
 
 #[derive(Debug, Copy, Clone)]
 struct Point {

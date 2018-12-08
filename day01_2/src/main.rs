@@ -2,7 +2,8 @@
 
 use aoc::aoc;
 
-use std::{cell::Cell, collections::HashSet};
+use hashbrown::HashSet;
+use std::cell::Cell;
 
 #[aoc(2018, 1, 2)]
 fn main(input: &str) -> Option<isize> {
