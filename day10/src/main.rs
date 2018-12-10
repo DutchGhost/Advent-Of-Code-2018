@@ -86,14 +86,14 @@ fn main(input: &str) {
         }).min_by_key(|&(_, bounds)| bounds)
         .unwrap();
 
-    let mut map = vec![vec![b' '; 300]; 400];
+    let mut map = vec![vec![b' '; 300]; 200];
 
     for p in points.iter() {
         map[(p.position.y + n * p.velocity.y) as usize - 100]
-            [(p.position.x + n * p.velocity.x) as usize - 150] = b'*';
+            [(p.position.x + n * p.velocity.x) as usize - 150] = b'#';
     }
 
-    for row in map.into_iter().filter(|row| row.contains(&b'*')) {
-        println!("{}", std::str::from_utf8(&row).unwrap());
+    for row in map.into_iter().filter(|row| row.contains(&b'#')) {
+        println!("{}", std::str::from_utf8(&row).unwrap().trim());
     }
 }
