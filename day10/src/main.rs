@@ -2,7 +2,7 @@ use aoc::aoc;
 
 use std::str::FromStr;
 
-macro_rules! Struct3 {
+macro_rules! Struct2 {
     ($s:ident) => {
         #[derive(Debug, Eq, PartialEq, Clone, Ord, PartialOrd)]
         struct $s {
@@ -28,7 +28,7 @@ fn to_nums<I: Iterator<Item = char>>(iter: I) -> (i64, i64) {
         .filter(|c| c.is_digit(10) || c == &'-' || c == &',')
         .collect::<String>();
 
-    let mut it = stringified.split(",");
+    let mut it = stringified.split(',');
 
     let n1 = it.next().unwrap().parse::<i64>().unwrap();
     let n2 = it.next().unwrap().parse::<i64>().unwrap();
@@ -36,8 +36,8 @@ fn to_nums<I: Iterator<Item = char>>(iter: I) -> (i64, i64) {
     (n1, n2)
 }
 
-Struct3!(Position);
-Struct3!(Velocity);
+Struct2!(Position);
+Struct2!(Velocity);
 
 struct Point {
     position: Position,
@@ -53,49 +53,47 @@ fn parse(s: &str) -> Vec<Point> {
         let position = split.next().unwrap().parse::<Position>().unwrap();
         let velocity = split.next().unwrap().parse::<Velocity>().unwrap();
 
-        points.push(Point {position, velocity});
+        points.push(Point { position, velocity });
     }
 
     points
 }
 
-use std::{
-    cmp::{min, max},
-};
+use std::cmp::{max, min};
 
 #[aoc(2018, 10, 1)]
 fn main(input: &str) {
     let points = parse(input);
 
-    let (n, _) = (0..20000).map(|n| {
+    let (n, _) = (0..20000)
+        .map(|n| {
+            let mut minx = std::i64::MAX;
+            let mut maxx = 0;
+            let mut miny = std::i64::MAX;
+            let mut maxy = 0;
 
-        let mut minx = std::i64::MAX;
-        let mut maxx = 0;
-        let mut miny = std::i64::MAX;
-        let mut maxy = 0;
+            for p in points.iter() {
+                let x = p.position.x + n * p.velocity.x;
+                let y = p.position.y + n * p.velocity.y;
 
-        for p in points.iter() {
-            let x = p.position.x + n * p.velocity.x;
-            let y = p.position.y + n * p.velocity.y;
+                minx = min(minx, x);
+                maxx = max(maxx, x);
+                miny = min(miny, y);
+                maxy = max(maxy, y);
+            }
 
-            minx = min(minx, x);
-            maxx = max(maxx, x);
-            miny = min(miny, y);
-            maxy = max(maxy, y);
-        }
-
-        (n, maxx - minx + maxy - miny)
-    }).min_by_key(|&(_, bounds)| bounds).unwrap();
+            (n, maxx - minx + maxy - miny)
+        }).min_by_key(|&(_, bounds)| bounds)
+        .unwrap();
 
     let mut map = vec![vec![b' '; 300]; 400];
 
     for p in points.iter() {
-        map[(p.position.y + n * p.velocity.y) as usize - 100][(p.position.x + n * p.velocity.x) as usize - 150] = b'*';
+        map[(p.position.y + n * p.velocity.y) as usize - 100]
+            [(p.position.x + n * p.velocity.x) as usize - 150] = b'*';
     }
 
-    for row in map {
-        if row.contains(&b'*') {
-            println!("{}", std::str::from_utf8(&row).unwrap());
-        }
+    for row in map.into_iter().filter(|row| row.contains(&b'*')) {
+        println!("{}", std::str::from_utf8(&row).unwrap());
     }
 }
