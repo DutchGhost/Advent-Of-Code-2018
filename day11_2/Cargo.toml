@@ -6,3 +6,5 @@ edition = "2018"
 
 [dependencies]
 aoc = {version = "*", git = "https://github.com/DutchGhost/aoc"}
+rayon = "*"
+hashbrown = "*"
