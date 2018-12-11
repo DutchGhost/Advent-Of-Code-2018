@@ -14,12 +14,9 @@ fn power(x: usize, y: usize, serial_number: usize) -> isize {
     power_level += serial_number;
     power_level *= rack_id;
 
-    power_level /= 100;
-    if power_level == 0 {
-        -5
-    } else {
-        ((power_level % 10) as isize) - 5
-    }
+    power_level = (power_level / 100) % 10;
+
+    power_level as isize - 5
 }
 
 fn area_power(x: usize, y: usize, serial_number: usize) -> isize {
