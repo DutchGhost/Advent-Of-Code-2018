@@ -1,117 +1,27 @@
 use aoc::aoc;
 
-use std::{
-    fmt::{self, Debug},
-    mem,
-};
+mod direction;
+mod trackpath;
+mod turnstate;
 
-enum TrackPath {
-    Horizontal,
-    Vertical,
-    Curve(CurveKind),
-    Intersection,
-    Empty,
-}
-
-impl Debug for TrackPath {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        match *self {
-            TrackPath::Horizontal => f.write_str("-"),
-            TrackPath::Vertical => f.write_str("|"),
-            TrackPath::Curve(ref c) => match c {
-                CurveKind::BottemLeftToUpRight => f.write_str("c"),
-                CurveKind::UpLeftToBottemRight => f.write_str("c"),
-            },
-            TrackPath::Intersection => f.write_str("+"),
-            TrackPath::Empty => f.write_str("."),
-        }
-    }
-}
-
-pub enum CurveKind {
-    BottemLeftToUpRight,
-    UpLeftToBottemRight,
-}
-#[derive(Debug)]
-enum TurnState {
-    Left,
-    Straight,
-    Right,
-}
-
-impl TurnState {
-    fn switch(&mut self) {
-        mem::replace(
-            self,
-            match *self {
-                TurnState::Left => TurnState::Straight,
-                TurnState::Straight => TurnState::Right,
-                TurnState::Right => TurnState::Left,
-            },
-        );
-    }
-}
+use self::direction::Direction;
+use self::trackpath::{CurveKind, TrackPath};
+use self::turnstate::TurnState;
 
 #[derive(Debug)]
-enum Direction {
-    Up,
-    Down,
-    Left,
-    Right,
-}
-
-impl Direction {
-    fn turn_left(&mut self) {
-        mem::replace(
-            self,
-            match self {
-                Direction::Up => Direction::Left,
-                Direction::Left => Direction::Down,
-                Direction::Down => Direction::Right,
-                Direction::Right => Direction::Up,
-            },
-        );
-    }
-
-    fn turn_right(&mut self) {
-        mem::replace(
-            self,
-            match self {
-                Direction::Up => Direction::Right,
-                Direction::Right => Direction::Down,
-                Direction::Down => Direction::Left,
-                Direction::Left => Direction::Up,
-            },
-        );
-    }
-}
-impl From<char> for Direction {
-    fn from(c: char) -> Self {
-        match c {
-            '^' => Direction::Up,
-            '>' => Direction::Right,
-            'v' => Direction::Down,
-            '<' => Direction::Left,
-            _ => unreachable!(format!("Tried to create a Direction from {}", c)),
-        }
-    }
-}
-
-#[derive(Debug)]
-pub struct Car {
-    x: usize,
-    y: usize,
+pub struct Cart {
+    id: u32,
+    x: u32,
+    y: u32,
 
     direction: Direction,
     turnstate: TurnState,
-
-    id: usize,
 }
 
-impl Car {
-    pub fn new(id: usize, x: usize, y: usize, c: char) -> Self {
+impl Cart {
+    pub fn new(id: u32, x: u32, y: u32, c: char) -> Self {
         let direction = Direction::from(c);
-        let turnstate = TurnState::Left;
+        let turnstate = TurnState::new();
 
         Self {
             id,
@@ -130,7 +40,7 @@ impl Car {
             Direction::Right => self.x += 1,
         };
 
-        match grid[self.y][self.x] {
+        match grid[self.y as usize][self.x as usize] {
             TrackPath::Curve(ref c) => match c {
                 CurveKind::UpLeftToBottemRight => match self.direction {
                     Direction::Up | Direction::Down => self.direction.turn_left(),
@@ -142,6 +52,7 @@ impl Car {
                     Direction::Right | Direction::Left => self.direction.turn_left(),
                 },
             },
+
             TrackPath::Intersection => {
                 match self.turnstate {
                     TurnState::Straight => {}
@@ -154,68 +65,61 @@ impl Car {
         }
     }
 
-    fn collide(&self, other: &Car) -> bool {
+    fn collide(&self, other: &Cart) -> bool {
         self.x == other.x && self.y == other.y && self.id != other.id
     }
 }
 
-impl From<char> for TrackPath {
-    fn from(c: char) -> Self {
-        match c {
-            '-' => TrackPath::Horizontal,
-            '|' => TrackPath::Vertical,
-            '/' => TrackPath::Curve(CurveKind::BottemLeftToUpRight),
-            '\\' => TrackPath::Curve(CurveKind::UpLeftToBottemRight),
-            'v' => TrackPath::Vertical,
-            '>' => TrackPath::Horizontal,
-            '<' => TrackPath::Horizontal,
-            '^' => TrackPath::Vertical,
-            '+' => TrackPath::Intersection,
-            _ => TrackPath::Empty,
-        }
-    }
-}
-#[aoc(2018, 13, 1)]
-fn main(input: &str) -> (usize, usize) {
-    let mut grid = Vec::new();
-    let mut cars = Vec::new();
-    let mut id = 0;
-    for (y, line) in input.lines().enumerate() {
-        let mut row = Vec::new();
+pub fn parse_track(s: &str) -> (Vec<Vec<TrackPath>>, Vec<Cart>) {
+    let mut track = Vec::new();
+    let mut carts = Vec::new();
 
-        for (x, c) in line.chars().enumerate() {
-            match c {
+    let mut cart_id = 0;
+
+    for (y, line) in s.lines().enumerate() {
+        let mut row = Vec::new();
+        for (x, trackpath) in line.chars().enumerate() {
+            match trackpath {
                 '<' | 'v' | '>' | '^' => {
-                    let car = Car::new(id, x, y, c);
-                    cars.push(car);
-                    id += 1;
+                    let cart = Cart::new(cart_id, x as u32, y as u32, trackpath);
+                    carts.push(cart);
+                    cart_id += 1;
                 }
                 _ => {}
             }
-
-            row.push(TrackPath::from(c));
+            row.push(TrackPath::from(trackpath));
         }
-        grid.push(row);
+        track.push(row);
     }
 
-    while cars.len() > 1 {
-        cars.sort_by_key(|car| (car.y, car.x));
+    (track, carts)
+}
 
-        let mut collided = Vec::new();
+#[aoc(2018, 13, 2)]
+fn main(input: &str) -> (u32, u32) {
+    let (track, mut carts) = parse_track(input);
 
-        for car_idx in 0..cars.len() {
-            cars[car_idx].step(&grid);
+    let mut collided_carts = Vec::new();
 
-            for c1 in cars.iter() {
-                if c1.collide(&cars[car_idx]) {
-                    collided.push(c1.id);
-                    collided.push(cars[car_idx].id);
+    while carts.len() != 1 {
+        carts.sort_by_key(|cart| (cart.y, cart.x));
+
+        for idx in 0..carts.len() {
+            carts[idx].step(&track);
+
+            for cart in &carts {
+                if cart.collide(&carts[idx]) {
+                    collided_carts.push(cart.id);
+                    collided_carts.push(carts[idx].id);
                 }
             }
         }
 
-        cars.retain(|c| !collided.contains(&c.id));
+        carts.retain(|cart| !collided_carts.contains(&cart.id));
+        collided_carts.clear();
     }
 
-    (cars[0].x, cars[0].y)
+    let remaining_cart = &carts[0];
+
+    (remaining_cart.x, remaining_cart.y)
 }
