@@ -1,6 +1,6 @@
 use aoc::aoc;
 
-use hashbrown::{HashSet};
+use hashbrown::HashSet;
 
 #[derive(Hash, Eq, PartialEq, Clone, Copy, Ord, PartialOrd)]
 enum Pot {
@@ -35,7 +35,6 @@ impl From<char> for Pot {
         }
     }
 }
-
 
 fn parse(s: &str) -> (HashSet<Vec<Pot>>, Vec<Pot>) {
     let mut lines = s.lines();
@@ -72,7 +71,7 @@ fn parse(s: &str) -> (HashSet<Vec<Pot>>, Vec<Pot>) {
 
 fn sum_untill(gens: usize, mut curr: Vec<Pot>, rules: &HashSet<Vec<Pot>>) -> isize {
     let curlen = curr.len();
-    
+
     for g in 1..gens {
         for _ in 0..4 {
             curr.insert(0, Pot::Empty);
@@ -88,14 +87,13 @@ fn sum_untill(gens: usize, mut curr: Vec<Pot>, rules: &HashSet<Vec<Pot>>) -> isi
                 next.push(Pot::Empty);
             }
         }
-   
+
         curr = next;
     }
 
     let diff = (curlen as isize - curr.len() as isize) / 2;
 
-    curr
-        .into_iter()
+    curr.into_iter()
         .enumerate()
         .filter(|(_, pot)| *pot == Pot::Plant)
         .map(|(idx, _)| idx as isize + diff)

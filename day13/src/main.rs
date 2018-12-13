@@ -1,8 +1,8 @@
 use aoc::aoc;
 
 use std::{
-    mem,
     fmt::{self, Debug},
+    mem,
 };
 
 enum TrackPath {
@@ -18,14 +18,12 @@ impl Debug for TrackPath {
         match *self {
             TrackPath::Horizontal => f.write_str("-"),
             TrackPath::Vertical => f.write_str("|"),
-            TrackPath::Curve(ref c) => {
-                match c {
-                    CurveKind::BottemLeftToUpRight => f.write_str("c"),
-                    CurveKind::UpLeftToBottemRight => f.write_str("c"),
-                }
+            TrackPath::Curve(ref c) => match c {
+                CurveKind::BottemLeftToUpRight => f.write_str("c"),
+                CurveKind::UpLeftToBottemRight => f.write_str("c"),
             },
             TrackPath::Intersection => f.write_str("+"),
-            TrackPath::Empty => f.write_str(".")
+            TrackPath::Empty => f.write_str("."),
         }
     }
 }
@@ -43,11 +41,14 @@ enum TurnState {
 
 impl TurnState {
     fn switch(&mut self) {
-        mem::replace(self, match *self {
-            TurnState::Left => TurnState::Straight,
-            TurnState::Straight => TurnState::Right,
-            TurnState::Right => TurnState::Left,
-        });
+        mem::replace(
+            self,
+            match *self {
+                TurnState::Left => TurnState::Straight,
+                TurnState::Straight => TurnState::Right,
+                TurnState::Right => TurnState::Left,
+            },
+        );
     }
 }
 
@@ -61,21 +62,27 @@ enum Direction {
 
 impl Direction {
     fn turn_left(&mut self) {
-        mem::replace(self, match self {
-            Direction::Up => Direction::Left,
-            Direction::Left => Direction::Down,
-            Direction::Down => Direction::Right,
-            Direction::Right => Direction::Up,
-        });
+        mem::replace(
+            self,
+            match self {
+                Direction::Up => Direction::Left,
+                Direction::Left => Direction::Down,
+                Direction::Down => Direction::Right,
+                Direction::Right => Direction::Up,
+            },
+        );
     }
 
     fn turn_right(&mut self) {
-        mem::replace(self, match self {
-            Direction::Up => Direction::Right,
-            Direction::Right => Direction::Down,
-            Direction::Down => Direction::Left,
-            Direction::Left => Direction::Up,
-        });
+        mem::replace(
+            self,
+            match self {
+                Direction::Up => Direction::Right,
+                Direction::Right => Direction::Down,
+                Direction::Down => Direction::Left,
+                Direction::Left => Direction::Up,
+            },
+        );
     }
 }
 impl From<char> for Direction {
@@ -106,11 +113,16 @@ impl Car {
         let direction = Direction::from(c);
         let turnstate = TurnState::Left;
 
-        Self {id, x, y, direction, turnstate }
+        Self {
+            id,
+            x,
+            y,
+            direction,
+            turnstate,
+        }
     }
 
     fn step(&mut self, grid: &[Vec<TrackPath>]) {
-
         match self.direction {
             Direction::Up => self.y -= 1,
             Direction::Down => self.y += 1,
@@ -118,52 +130,28 @@ impl Car {
             Direction::Right => self.x += 1,
         };
 
-        match self.direction {
-            Direction::Up | Direction::Down => {
-                match &grid[self.y][self.x] {
-                    TrackPath::Vertical | TrackPath::Curve(_) | TrackPath::Intersection => {}
-                    x => panic!("Direction: Up/down, found trackpath {:?}", x)
-                }
-            }
-
-            Direction::Right | Direction::Left => {
-                match &grid[self.y][self.x] {
-                    TrackPath::Horizontal | TrackPath::Curve(_) | TrackPath::Intersection => {}
-                    x => panic!("Direction: Left/right, found trackpath: {:?}", x)
-                }
-            }
-        }
-
-        println!("{:?}, TRACKPATH: {:?}", self, grid[self.y][self.x]);
         match grid[self.y][self.x] {
-            TrackPath::Curve(ref c) => {
-                match c {
-                    CurveKind::UpLeftToBottemRight => {
-                        match self.direction {
-                            Direction::Up | Direction::Down => self.direction.turn_left(),
-                            Direction::Right | Direction::Left => self.direction.turn_right(),
-                        }
-                    },
+            TrackPath::Curve(ref c) => match c {
+                CurveKind::UpLeftToBottemRight => match self.direction {
+                    Direction::Up | Direction::Down => self.direction.turn_left(),
+                    Direction::Right | Direction::Left => self.direction.turn_right(),
+                },
 
-                    CurveKind::BottemLeftToUpRight => {
-                        match self.direction {
-                            Direction::Up | Direction::Down => self.direction.turn_right(),
-                            Direction::Right | Direction::Left => self.direction.turn_left(),
-                        }
-                    }
-                }
-            }
+                CurveKind::BottemLeftToUpRight => match self.direction {
+                    Direction::Up | Direction::Down => self.direction.turn_right(),
+                    Direction::Right | Direction::Left => self.direction.turn_left(),
+                },
+            },
             TrackPath::Intersection => {
                 match self.turnstate {
-                    TurnState::Straight => {},
+                    TurnState::Straight => {}
                     TurnState::Left => self.direction.turn_left(),
                     TurnState::Right => self.direction.turn_right(),
                 };
                 self.turnstate.switch();
-            },
+            }
             _ => {}
         }
-
     }
 
     fn collide(&self, other: &Car) -> bool {
@@ -183,24 +171,16 @@ impl From<char> for TrackPath {
             '<' => TrackPath::Horizontal,
             '^' => TrackPath::Vertical,
             '+' => TrackPath::Intersection,
-            _ => TrackPath::Empty
+            _ => TrackPath::Empty,
         }
     }
 }
 #[aoc(2018, 13, 1)]
-fn main(input: &str) {
-    
-//     let input = r"
-// /->-\        
-// |   |  /----\
-// | /-+--+-\  |
-// | | |  | v  |
-// \-+-/  \-+--/
-//   \------/  ";
+fn main(input: &str) -> (usize, usize) {
     let mut grid = Vec::new();
     let mut cars = Vec::new();
     let mut id = 0;
-    for (y, line) in input.lines().skip(1).enumerate() {
+    for (y, line) in input.lines().enumerate() {
         let mut row = Vec::new();
 
         for (x, c) in line.chars().enumerate() {
@@ -215,40 +195,22 @@ fn main(input: &str) {
 
             row.push(TrackPath::from(c));
         }
-
         grid.push(row);
     }
 
-    let(x, y) = 'outer: loop {
-        
-        // for (y, row) in grid.iter().enumerate() {
-        //     for (x, c) in row.iter().enumerate() {
-        //         let mut found = false;
-        //         for car in cars.iter() {
-        //             if car.x == x && car.y == y {
-        //                 print!("{}", car.id);
-        //                 found = true;
-        //             }
-        //         }
-
-        //         if !found {
-        //             print!("{:?}", c);
-        //         }
-        //     }
-        //     println!()
-        // }
+    let (x, y) = 'outer: loop {
         cars.sort_by_key(|car| (car.y, car.x));
 
         for car_idx in 0..cars.len() {
             cars[car_idx].step(&grid);
 
             for c1 in cars.iter() {
-                    if c1.collide(&cars[car_idx]) {
-                        break 'outer (c1.x, c1.y);
-                    }
+                if c1.collide(&cars[car_idx]) {
+                    break 'outer (c1.x, c1.y);
+                }
             }
         }
     };
 
-    println!("{} {}", x, y);
+    (x, y)
 }
