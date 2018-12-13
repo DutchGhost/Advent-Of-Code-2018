@@ -20,8 +20,8 @@ impl Debug for TrackPath {
             TrackPath::Vertical => f.write_str("|"),
             TrackPath::Curve(ref c) => {
                 match c {
-                    CurveKind::BottemLeftToUpRight => f.write_str("/"),
-                    CurveKind::UpLeftToBottemRight => f.write_str(r"\\"),
+                    CurveKind::BottemLeftToUpRight => f.write_str("c"),
+                    CurveKind::UpLeftToBottemRight => f.write_str("c"),
                 }
             },
             TrackPath::Intersection => f.write_str("+"),
@@ -97,20 +97,44 @@ pub struct Car {
 
     direction: Direction,
     turnstate: TurnState,
+
+    id: usize,
 }
 
 impl Car {
-    pub fn new(x: usize, y: usize, c: char) -> Self {
+    pub fn new(id: usize, x: usize, y: usize, c: char) -> Self {
         let direction = Direction::from(c);
         let turnstate = TurnState::Left;
 
-        Self { x, y, direction, turnstate }
+        Self {id, x, y, direction, turnstate }
     }
 
     fn step(&mut self, grid: &[Vec<TrackPath>]) {
-        //println!("SELF X Y = {} {}", self.x, self.y);
-        //println!("ROW: {:?}", grid[self.y]);
-        //println!("TRACKPATH: {:?}", grid[self.y][self.x]);
+
+        match self.direction {
+            Direction::Up => self.y -= 1,
+            Direction::Down => self.y += 1,
+            Direction::Left => self.x -= 1,
+            Direction::Right => self.x += 1,
+        };
+
+        match self.direction {
+            Direction::Up | Direction::Down => {
+                match &grid[self.y][self.x] {
+                    TrackPath::Vertical | TrackPath::Curve(_) | TrackPath::Intersection => {}
+                    x => panic!("Direction: Up/down, found trackpath {:?}", x)
+                }
+            }
+
+            Direction::Right | Direction::Left => {
+                match &grid[self.y][self.x] {
+                    TrackPath::Horizontal | TrackPath::Curve(_) | TrackPath::Intersection => {}
+                    x => panic!("Direction: Left/right, found trackpath: {:?}", x)
+                }
+            }
+        }
+
+        println!("{:?}, TRACKPATH: {:?}", self, grid[self.y][self.x]);
         match grid[self.y][self.x] {
             TrackPath::Curve(ref c) => {
                 match c {
@@ -140,17 +164,10 @@ impl Car {
             _ => {}
         }
 
-        match self.direction {
-            Direction::Up => self.y -= 1,
-            Direction::Down => self.y += 1,
-            Direction::Left => self.x -= 1,
-            Direction::Right => self.x += 1,
-        };
-
     }
 
     fn collide(&self, other: &Car) -> bool {
-        self.x == other.x && self.y == other.y
+        self.x == other.x && self.y == other.y && self.id != other.id
     }
 }
 
@@ -179,19 +196,19 @@ fn main(input: &str) {
 // | /-+--+-\  |
 // | | |  | v  |
 // \-+-/  \-+--/
-//   \------/  
-//     ";
+//   \------/  ";
     let mut grid = Vec::new();
     let mut cars = Vec::new();
-
+    let mut id = 0;
     for (y, line) in input.lines().skip(1).enumerate() {
         let mut row = Vec::new();
 
         for (x, c) in line.chars().enumerate() {
             match c {
                 '<' | 'v' | '>' | '^' => {
-                    let car = Car::new(x, y, c);
+                    let car = Car::new(id, x, y, c);
                     cars.push(car);
+                    id += 1;
                 }
                 _ => {}
             }
@@ -203,18 +220,33 @@ fn main(input: &str) {
     }
 
     let(x, y) = 'outer: loop {
-        for (idx, c1) in cars.iter().enumerate() {
-            for c2 in cars[idx + 1..].iter() {
-                if c1.collide(c2) {
-                    break 'outer (c1.x, c1.y);
-                }
+        
+        // for (y, row) in grid.iter().enumerate() {
+        //     for (x, c) in row.iter().enumerate() {
+        //         let mut found = false;
+        //         for car in cars.iter() {
+        //             if car.x == x && car.y == y {
+        //                 print!("{}", car.id);
+        //                 found = true;
+        //             }
+        //         }
+
+        //         if !found {
+        //             print!("{:?}", c);
+        //         }
+        //     }
+        //     println!()
+        // }
+        cars.sort_by_key(|car| (car.y, car.x));
+
+        for car_idx in 0..cars.len() {
+            cars[car_idx].step(&grid);
+
+            for c1 in cars.iter() {
+                    if c1.collide(&cars[car_idx]) {
+                        break 'outer (c1.x, c1.y);
+                    }
             }
-        }
-
-        cars.sort_by_key(|car| (car.x, car.y));
-
-        for car in cars.iter_mut() {
-            car.step(&grid);
         }
     };
 
