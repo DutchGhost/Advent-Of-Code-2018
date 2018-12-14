@@ -88,7 +88,7 @@ fn solve(input: &str) -> usize {
 
         for digit in Digits::new(new_recipe) {
             recipes.push(digit);
-            if &recipes[recipes.len().saturating_sub(len)..] == pattern {
+            if recipes.ends_with(pattern) {
                 return recipes.len() - len;
             }
         }
@@ -119,7 +119,7 @@ fn main(input: &str) -> usize {
 
         for digit in Digits::new(new_recipe) {
             recipes.push(digit);
-            if &recipes[recipes.len().saturating_sub(len)..] == pattern {
+            if recipes.ends_with(pattern)  {
                 return recipes.len() - len;
             }
         }
@@ -141,7 +141,7 @@ mod tests {
             assert_eq!(solve("01245"), 5);
             assert_eq!(solve("92510"), 18);
             assert_eq!(solve("59414"), 2018);
-            assert_eq!(solve_fast("598701"), 20331097)
+           assert_eq!(solve_fast("598701"), 20331097)
         })
     }
 
