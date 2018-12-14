@@ -53,7 +53,7 @@ fn main(input: &str) -> usize {
         for digit in Digits::new(new_recipe) {
             recipes.push(digit);
             if &recipes[recipes.len().saturating_sub(len)..] == pattern {
-                return recipes.len() - len
+                return recipes.len() - len;
             }
         }
 
