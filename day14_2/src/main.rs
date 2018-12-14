@@ -32,7 +32,7 @@ impl Iterator for Digits {
 }
 
 #[aoc(2018, 14, 2)]
-fn main(input: &str) {
+fn main(input: &str) -> usize {
     let pattern = input
         .trim()
         .chars()
@@ -42,24 +42,22 @@ fn main(input: &str) {
     let pattern = pattern.as_slice();
     let len = pattern.len();
 
-    let mut recipes = vec![3u8, 7];
+    let mut recipes = vec![3, 7];
 
     let mut elf1 = 0;
     let mut elf2 = 1;
 
-    'outer: while &recipes[recipes.len().saturating_sub(len)..] != pattern {
+    loop {
         let new_recipe = recipes[elf1] + recipes[elf2];
 
         for digit in Digits::new(new_recipe) {
             recipes.push(digit);
             if &recipes[recipes.len().saturating_sub(len)..] == pattern {
-                break 'outer;
+                return recipes.len() - len
             }
         }
 
         elf1 = (elf1 + recipes[elf1] as usize + 1) % recipes.len();
         elf2 = (elf2 + recipes[elf2] as usize + 1) % recipes.len();
     }
-
-    println!("{}", recipes.len() - len);
 }
