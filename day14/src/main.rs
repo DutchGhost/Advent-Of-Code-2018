@@ -42,11 +42,7 @@ fn main(input: &str) -> String {
 
     while recipes.len() < input + 10 {
         let new_recipe = recipes[elf1] + recipes[elf2];
-        let digits = Digits::new(new_recipe);
-
-        for digit in digits {
-            recipes.push(digit);
-        }
+        recipes.extend(Digits::new(new_recipe));
 
         elf1 = (elf1 + recipes[elf1] as usize + 1) % recipes.len();
         elf2 = (elf2 + recipes[elf2] as usize + 1) % recipes.len();
