@@ -48,10 +48,8 @@ fn main(input: &str) -> String {
         elf2 = (elf2 + recipes[elf2] as usize + 1) % recipes.len();
     }
 
-    recipes
-        .into_iter()
-        .skip(input)
-        .take(10)
-        .map(|n| std::char::from_digit(n as u32, 10).unwrap())
-        .collect::<String>()
+    recipes.drain(0..input);
+    recipes.iter_mut().for_each(|n| *n += 48);
+
+    String::from_utf8(recipes).unwrap()
 }
