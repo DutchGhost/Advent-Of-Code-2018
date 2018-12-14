@@ -1,6 +1,6 @@
 use aoc::aoc;
 
-const DIGITS: [&[usize]; 20] = [
+const DIGITS: [&[u8]; 20] = [
     &[0],
     &[1],
     &[2],
@@ -46,7 +46,7 @@ fn main(input: &str) -> usize {
         let recipe_elf2 = recipes[elf2] as usize;
 
         for digit in DIGITS[recipe_elf1 + recipe_elf2] {
-            recipes.push(*digit as u8);
+            recipes.push(*digit);
             if recipes.ends_with(pattern) {
                 return recipes.len() - len;
             }

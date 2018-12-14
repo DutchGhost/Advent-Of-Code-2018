@@ -1,35 +1,27 @@
 use aoc::aoc;
 
-struct Digits {
-    n: u8,
-    divisor: u8,
-}
-
-impl Digits {
-    fn new(n: u8) -> Self {
-        let mut divisor = 1;
-        while n >= divisor * 10 {
-            divisor *= 10;
-        }
-
-        Self { n, divisor }
-    }
-}
-
-impl Iterator for Digits {
-    type Item = u8;
-
-    fn next(&mut self) -> Option<Self::Item> {
-        if self.divisor == 0 {
-            None
-        } else {
-            let v = Some(self.n / self.divisor);
-            self.n %= self.divisor;
-            self.divisor /= 10;
-            v
-        }
-    }
-}
+const DIGITS: [&[u8]; 20] = [
+    &[0],
+    &[1],
+    &[2],
+    &[3],
+    &[4],
+    &[5],
+    &[6],
+    &[7],
+    &[8],
+    &[9],
+    &[1, 0],
+    &[1, 1],
+    &[1, 2],
+    &[1, 3],
+    &[1, 4],
+    &[1, 5],
+    &[1, 6],
+    &[1, 7],
+    &[1, 8],
+    &[1, 9],
+];
 
 #[aoc(2018, 14, 1)]
 fn main(input: &str) -> String {
@@ -42,7 +34,7 @@ fn main(input: &str) -> String {
 
     while recipes.len() < input + 10 {
         let new_recipe = recipes[elf1] + recipes[elf2];
-        recipes.extend(Digits::new(new_recipe));
+        recipes.extend_from_slice(DIGITS[new_recipe as usize]);
 
         elf1 = (elf1 + recipes[elf1] as usize + 1) % recipes.len();
         elf2 = (elf2 + recipes[elf2] as usize + 1) % recipes.len();
