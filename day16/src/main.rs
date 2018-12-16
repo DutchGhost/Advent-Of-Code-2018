@@ -2,15 +2,15 @@
 use aoc::aoc;
 
 macro_rules! assert_len {
-    ($e:expr) => (
+    ($e:expr) => {
         match $e.len() {
-            4 => {},
+            4 => {}
             len => {
                 dbg!($e);
                 panic!("Expected a slice with a len of 4, got len of {}", len);
             }
         }
-    )
+    };
 }
 
 macro_rules! opcode_impl_ops {
@@ -69,7 +69,6 @@ pub fn setr(instruction: &[usize], registers: &[usize]) -> [usize; 4] {
 }
 
 pub fn seti(instruction: &[usize], registers: &[usize]) -> [usize; 4] {
-
     assert_len!(instruction);
     assert_len!(registers);
 
@@ -88,27 +87,8 @@ macro_rules! opcode_impl_eqs {
             assert_len!(instruction);
             assert_len!(registers);
 
-            let rhs = instruction[1];
-            let lhs = instruction[2];
-            let store = instruction[3];
-
-            let mut output = copy_register(registers);
-
-            if registers[lhs] $operation rhs {
-                output[store] = 1;
-            } else {
-                output[store] = 0;
-            }
-
-            output
-        }
-
-        fn $fn_reg_val(instruction: &[usize], registers: &[usize]) -> [usize; 4] {
-            assert_len!(instruction);
-            assert_len!(registers);
-
-            let rhs = instruction[1];
-            let lhs = instruction[2];
+            let lhs = instruction[1];
+            let rhs = instruction[2];
             let store = instruction[3];
 
             let mut output = copy_register(registers);
@@ -122,12 +102,31 @@ macro_rules! opcode_impl_eqs {
             output
         }
 
+        fn $fn_reg_val(instruction: &[usize], registers: &[usize]) -> [usize; 4] {
+            assert_len!(instruction);
+            assert_len!(registers);
+
+            let lhs = instruction[1];
+            let rhs = instruction[2];
+            let store = instruction[3];
+
+            let mut output = copy_register(registers);
+
+            if registers[lhs] $operation rhs {
+                output[store] = 1;
+            } else {
+                output[store] = 0;
+            }
+
+            output
+        }
+
         fn $fn_reg_reg(instruction: &[usize], registers: &[usize]) -> [usize; 4] {
             assert_len!(instruction);
             assert_len!(registers);
 
-            let rhs = instruction[1];
-            let lhs = instruction[2];
+            let lhs = instruction[1];
+            let rhs = instruction[2];
             let store = instruction[3];
 
             let mut output = copy_register(registers);
@@ -162,53 +161,65 @@ fn copy_register(registers: &[usize]) -> [usize; 4] {
 }
 
 fn parse(input: &str) -> Vec<&str> {
-    input.trim().lines().filter(|line| !line.is_empty()).collect()
+    input
+        .trim()
+        .lines()
+        .filter(|line| !line.is_empty())
+        .collect()
 }
 
-fn clamp<'a>(mut iter: impl Iterator<Item = &'a [&'a str]> + 'a) -> impl Iterator<Item = [[usize; 4]; 3]> + 'a {
-    iter.map(move |chunk| {
-        match chunk {
-            [before, instruction, after] => {
-                let mut before_array = [0; 4];
+fn clamp<'a>(
+    iter: impl Iterator<Item = &'a [&'a str]> + 'a,
+) -> impl Iterator<Item = [[usize; 4]; 3]> + 'a {
+    iter.map(move |chunk| match chunk {
+        [before, instruction, after] => {
+            let mut before_array = [0; 4];
 
-                for (src, dst) in before[9..before.len() - 1].split(", ").zip(before_array.iter_mut()) {
-                    *dst = src.parse().unwrap();
-                }
+            for (src, dst) in before[9..before.len() - 1]
+                .split(", ")
+                .zip(before_array.iter_mut())
+            {
+                *dst = src.parse().unwrap();
+            }
 
-                let mut instruction_array = [0; 4];
+            let mut instruction_array = [0; 4];
 
-                for (src, dst) in instruction.split(" ").zip(instruction_array.iter_mut()) {
-                    *dst = src.parse().unwrap();
-                }
+            for (src, dst) in instruction.split(' ').zip(instruction_array.iter_mut()) {
+                *dst = src.parse().unwrap();
+            }
 
-                let mut after_array = [0; 4];
-                for (src, dst) in after[9..after.len() - 1].split(", ").zip(after_array.iter_mut()) {
-                    *dst = src.parse().unwrap();
-                }
+            let mut after_array = [0; 4];
+            for (src, dst) in after[9..after.len() - 1]
+                .split(", ")
+                .zip(after_array.iter_mut())
+            {
+                *dst = src.parse().unwrap();
+            }
 
-                [before_array, instruction_array, after_array]
-            },
-            _ => panic!()
+            [before_array, instruction_array, after_array]
         }
+        _ => unreachable!(),
     })
 }
 
 #[aoc(2018, 16, 1)]
 fn main(input: &str) -> usize {
-    let opcodes = [addr, addi, mulr, muli, banr, bani, borr, bori, setr, seti, gtir, gtri, gtrr, eqir, eqri, eqrr];
-    let names = ["addr", "addi", "mulr", "muli", "banr", "bani", "borr", "bori", "setr", "seti", "gtir", "gtri", "gtrr", "eqir", "eqri", "eqrr"];
+    let opcodes = [
+        addr, addi, mulr, muli, banr, bani, borr, bori, setr, seti, gtir, gtri, gtrr, eqir, eqri,
+        eqrr,
+    ];
 
-    clamp(parse(input).chunks(3).take_while(|chunk| chunk[0].starts_with("Before"))).filter(|line| {
-        match line {
-            [before, instructions, after] => {
-                let count = opcodes.iter().zip(names.iter()).filter(|(opcode, name)| {
-                    opcode(instructions, before)[..] == after[..]
-                }).inspect(|(opcode, name)| println!("{}", name)).count();
-                
-                println!("COUNT IS {}", count);
-                count >= 3
-            }
-            _ => panic!()
+    clamp(
+        parse(input)
+            .chunks(3)
+            .take_while(|chunk| chunk[0].starts_with("Before")),
+    ).filter(|line| match line {
+        [before, instruction, after] => {
+            opcodes
+                .iter()
+                .filter(|opcode| opcode(instruction, before)[..] == after[..])
+                .count()
+                >= 3
         }
     }).count()
 }
