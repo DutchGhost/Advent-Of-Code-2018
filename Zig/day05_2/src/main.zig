@@ -46,14 +46,13 @@ pub fn main() !void {
     var filter_char: u8 = 65;
 
     while(filter_char <= 90) : (filter_char += 1) {
-        debug.warn("c {} {c}\n", filter_char, filter_char);
         var reacted_len = try react(input[0..input.len - 1], &stack, filter_char);
         if (reacted_len < len) {
             len = reacted_len;
         }
         
         // this clears the Vec, keeping its capacity.
-        stack.len = 0;
+        stack.shrink(0);
     }
     debug.warn("The remaining shortest length = {}\n", len);
 }

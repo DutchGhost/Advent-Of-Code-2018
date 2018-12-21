@@ -20,8 +20,7 @@ fn complement(c: u8) u8 {
 }
 
 pub fn main() !void {
-    var allocator = heap.DirectAllocator.init();
-    
+    var allocator = heap.DirectAllocator.init();    
     defer allocator.deinit();
 
     var stack = Vec(u8).init(&allocator.allocator);
