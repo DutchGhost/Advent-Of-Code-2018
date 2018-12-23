@@ -1,3 +1,4 @@
+#![feature(vecdeque_rotate)]
 use aoc::aoc;
 
 use std::collections::VecDeque;
@@ -11,29 +12,18 @@ fn parse(s: &str) -> (usize, usize) {
     (players, last_marble)
 }
 
-fn rotate_clockwise<T>(marbles: &mut VecDeque<T>) {
-    if let Some(popped_back) = marbles.pop_back() {
-        marbles.push_front(popped_back);
-    }
-}
-
-fn rotate_counter_clockwise<T>(marbles: &mut VecDeque<T>) {
-    if let Some(popped_front) = marbles.pop_front() {
-        marbles.push_back(popped_front);
-    }
-}
-
 fn normal_step<T>(marbles: &mut VecDeque<T>, marble: T) {
-    rotate_clockwise(marbles);
+    marbles.rotate_right(1);
     marbles.push_front(marble);
 }
 
 fn special_step<T>(marbles: &mut VecDeque<T>) -> T {
-    (0..7).for_each(|_| rotate_counter_clockwise(marbles));
+    marbles.rotate_left(7);
 
     let score = marbles.pop_front().unwrap();
 
-    rotate_clockwise(marbles);
+    marbles.rotate_right(1);
+
     score
 }
 

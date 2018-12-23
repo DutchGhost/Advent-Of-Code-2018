@@ -52,7 +52,10 @@ fn parse(s: &str) -> Vec<Vein> {
 
         let start_scnd = line.chars().position(|c| c == char_to_look_for).unwrap();
         let end_scnd_num = line.chars().position(|c| c == '.').unwrap();
-        let scnd = line[start_scnd + 2..end_scnd_num].parse().expect(&format!(r"{}\{}", file!   (), line!()));
+        let scnd =
+            line[start_scnd + 2..end_scnd_num]
+                .parse()
+                .expect(&format!(r"{}\{}", file!(), line!()));
         let last = line[end_scnd_num + 2..].parse().unwrap();
 
         if char_to_look_for == 'y' {
@@ -65,20 +68,20 @@ fn parse(s: &str) -> Vec<Vein> {
     veins
 }
 
-use std::cmp::{min, max};
+use std::cmp::{max, min};
 
 #[aoc(2018, 17, 1)]
 fn main(input: &str) {
-//     let input = "x=495, y=2..7
-// y=7, x=495..501
-// x=501, y=3..7
-// x=498, y=2..4
-// x=506, y=1..2
-// x=498, y=10..13
-// x=504, y=10..13
-// y=13, x=498..504";
+    //     let input = "x=495, y=2..7
+    // y=7, x=495..501
+    // x=501, y=3..7
+    // x=498, y=2..4
+    // x=506, y=1..2
+    // x=498, y=10..13
+    // x=504, y=10..13
+    // y=13, x=498..504";
     let veins = parse(input);
-    
+
     let mut max_x = 0;
     let mut max_y = 0;
     let mut min_x = std::usize::MAX;
@@ -113,7 +116,6 @@ fn main(input: &str) {
                     grid[row][x] = Cell::Clay;
                 }
             }
-
         }
     }
 
@@ -121,22 +123,20 @@ fn main(input: &str) {
     print_all(min_x - 2, &grid);
 
     println!("\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n");
-    
-    for _ in 0..1000 {
+
+    for _ in 0..10_000 {
         //let water_before = grid.iter().flat_map(|v| v.into_iter()).filter(|&&c| c == Cell::Water || c == Cell::DryWater).count();
 
         for y in 0..max_y {
             for x in min_x - 2..max_x {
                 match grid[y][x] {
-
                     // found the spring, go down straight untill we reach something that isn't sand
                     Cell::WaterSpring => {
                         for going_down_y in (y + 1..) {
                             if grid[going_down_y][x] != Cell::Sand {
-                                break
+                                break;
                             }
                             grid[going_down_y][x] = Cell::DryWater;
-                           
                         }
                     }
 
@@ -154,7 +154,6 @@ fn main(input: &str) {
 
                                 (Some(x_offset_left), None) => {
                                     for item in grid[y][x_offset_left..x].iter_mut() {
-                                       
                                         *item = Cell::DryWater;
                                     }
                                 }
@@ -167,18 +166,16 @@ fn main(input: &str) {
                                     }
                                 }
 
-                                (None, None) => {
-                                
-                                }
+                                (None, None) => {}
                             }
                         }
                         for going_down_y in (y + 1..max_y + 1) {
                             if grid[going_down_y][x] != Cell::Sand {
-                                break
+                                break;
                             }
                             grid[going_down_y][x] = Cell::DryWater;
                         }
-                    },
+                    }
                     Cell::Sand => {
                         if x > 0 && grid[y][x - 1] == Cell::DryWater {
                             if has_ground(x - 1, y, &grid) {
@@ -210,7 +207,11 @@ fn main(input: &str) {
 
     print_all(min_x - 2, &grid);
 
-    let count = grid.into_iter().flat_map(|v| v.into_iter()).filter(|&c| c == Cell::Water || c == Cell::DryWater).count();
+    let count = grid
+        .into_iter()
+        .flat_map(|v| v.into_iter())
+        .filter(|&c| c == Cell::Water || c == Cell::DryWater)
+        .count();
 
     println!("{:?}", count);
 }
@@ -221,39 +222,36 @@ fn is_sand_and_not_water(cell: &Cell) -> bool {
 
 fn can_flood_left(x: usize, y: usize, grid: &[Vec<Cell>]) -> Option<usize> {
     let mut ret = x;
-    for going_left_x in (0..x).rev() {
-
+    for going_left_x in (0..=x).rev() {
         if is_sand_and_not_water(&grid[y][going_left_x]) {
-            return Some(ret)
+            return Some(ret);
         }
 
         if !has_ground(going_left_x, y, &grid) {
-            return None
+            return None;
         }
 
         ret = going_left_x;
     }
 
-    return None
+    return None;
 }
 
 fn can_flood_right(x: usize, y: usize, grid: &[Vec<Cell>]) -> Option<usize> {
     let mut ret = x;
     for going_right_x in x..grid[0].len() {
-
         if is_sand_and_not_water(&grid[y][going_right_x]) {
-            return Some(ret)
+            return Some(ret);
         }
 
         if !has_ground(going_right_x, y, &grid) {
-            return None
+            return None;
         }
         ret = going_right_x
     }
 
-    return None
+    return None;
 }
-
 
 fn has_wall(x: usize, y: usize, grid: &[Vec<Cell>]) -> bool {
     for going_to_left_x in (0..x).rev() {
@@ -290,7 +288,9 @@ fn has_2_walls(x: usize, y: usize, grid: &[Vec<Cell>]) -> bool {
     walls == 2
 }
 fn has_ground(x: usize, y: usize, grid: &[Vec<Cell>]) -> bool {
-    if y > grid.len() { return false }
+    if y > grid.len() {
+        return false;
+    }
     match grid[y + 1][x] {
         Cell::Water | Cell::Clay => true,
         _ => false,

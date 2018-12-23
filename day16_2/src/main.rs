@@ -202,7 +202,7 @@ fn clamp<'a>(
     })
 }
 
-use hashbrown::{HashSet, HashMap};
+use hashbrown::{HashMap, HashSet};
 
 fn run(mapper: &HashMap<usize, &&str>, opcode: &[usize], registers: &[usize]) -> [usize; 4] {
     match mapper.get(&opcode[0]).unwrap() {
@@ -232,10 +232,17 @@ fn main(input: &str) -> usize {
         eqrr,
     ];
 
-    let names = ["addr", "addi", "mulr", "muli", "banr", "bani", "borr", "bori", "setr", "seti", "gtir", "gtri", "gtrr", "eqir", "eqri", "eqrr"];
+    let names = [
+        "addr", "addi", "mulr", "muli", "banr", "bani", "borr", "bori", "setr", "seti", "gtir",
+        "gtri", "gtrr", "eqir", "eqri", "eqrr",
+    ];
 
     let parsed = parse(input);
-    let iterator = clamp(parsed.chunks(3).take_while(|chunk| chunk[0].starts_with("Before")));
+    let iterator = clamp(
+        parsed
+            .chunks(3)
+            .take_while(|chunk| chunk[0].starts_with("Before")),
+    );
 
     let mut map = HashMap::new();
 
@@ -244,16 +251,18 @@ fn main(input: &str) -> usize {
             [before, instruction, after] => {
                 for (opcode, name) in opcodes.iter().zip(names.iter()) {
                     if opcode(&instruction, &before)[..] == after[..] {
-                        map.entry(instruction[0]).or_insert_with(HashSet::new).insert(name);
+                        map.entry(instruction[0])
+                            .or_insert_with(HashSet::new)
+                            .insert(name);
                     }
                 }
             }
         }
     }
-    
+
     let mut newmap = map.clone();
     let mut finals = HashMap::new();
-    
+
     loop {
         for (code, names) in map.iter() {
             if names.len() == 1 {
@@ -270,7 +279,7 @@ fn main(input: &str) -> usize {
 
         map.retain(|_, v| v.len() > 0);
         if map.len() == 0 {
-            break
+            break;
         }
     }
 
