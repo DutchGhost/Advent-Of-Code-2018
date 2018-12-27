@@ -69,7 +69,7 @@ pub fn main() !void {
     try parse(input, &buffer, &allocator.allocator);
 
     var slice = buffer.toSlice();
-    std.debug.warn("slice len = {}\n", slice.len);
+    
     for(slice) |constellation, idx| {
         for(constellation.toSlice()) |point| {
             for(slice[0..idx]) |*constellation2| {
@@ -77,18 +77,7 @@ pub fn main() !void {
                     try slice[idx].appendSlice(constellation2.toSlice());
                     _ = constellation2.shrink(0);
                 }
-            //    for(constellation2.toSlice()) |p| {
-            //        if (point.manhatten(&p) <= 3) {
-            //            try slice[idx].appendSlice(constellation2.toSlice());
-            //            _ = constellation2.shrink(0);
-            //            break;
-            //        }
-            //    }
             }
-            //if (can_merge(&point, slice[0..idx])) |constell| {
-            //    try slice[idx].appendSlice(constell.toSlice());
-            //    _ = (&constell).shrink(0);
-            //}
         }
     }
     
