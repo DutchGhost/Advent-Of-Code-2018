@@ -19,10 +19,10 @@ const Point = struct {
     q: i32,
 
     fn manhatten(self: *const Self, other: *const Self) i32 {
-        return  abs(self.x + other.x) +
-                abs(self.y + other.y) +
-                abs(self.z + other.z) +
-                abs(self.q + other.q);
+        return  abs(self.x - other.x) +
+                abs(self.y - other.y) +
+                abs(self.z - other.z) +
+                abs(self.q - other.q);
     }
 };
 
@@ -45,18 +45,15 @@ fn parse(bytes: []const u8, buffer: *Vec(Vec(Point)), alloc: *mem.Allocator) !vo
     }
 }
 
-fn find(idx: usize, point: Point, constellations: []Vec(Point)) !void {
-    for(constellations) |*constellation| {
-        for(constellation.toSlice()) |p| {
-            std.debug.warn("{} : {}\n", point, p);
-            if (point.manhatten(&p) <= 3) {
-                try constellations[idx].appendSlice(constellation.toSlice());
-                _ = constellation.shrink(0);
-                break;
-            }
+fn can_merge(point: *const Point, slice: []Point) bool {
+    for(slice) |*p| {
+        if (point.manhatten(p) <= 3) {
+            return true;
         }
     }
+    return false;
 }
+
 pub fn main() !void {
     var allocator = heap.DirectAllocator.init();
     defer allocator.deinit();
@@ -75,18 +72,23 @@ pub fn main() !void {
     std.debug.warn("slice len = {}\n", slice.len);
     for(slice) |constellation, idx| {
         for(constellation.toSlice()) |point| {
-            //try find(idx, point, slice[0..idx]);
             for(slice[0..idx]) |*constellation2| {
-                for(constellation2.toSlice()) |p| {
-                    std.debug.warn("{} : {}\n", point, p);
-                    if (point.manhatten(&p) <= 3) {
+                if (can_merge(&point, constellation2.toSlice())) {
                     try slice[idx].appendSlice(constellation2.toSlice());
-                        _ = constellation2.shrink(0);
-                        break;
-                    }
+                    _ = constellation2.shrink(0);
                 }
+            //    for(constellation2.toSlice()) |p| {
+            //        if (point.manhatten(&p) <= 3) {
+            //            try slice[idx].appendSlice(constellation2.toSlice());
+            //            _ = constellation2.shrink(0);
+            //            break;
+            //        }
+            //    }
             }
-
+            //if (can_merge(&point, slice[0..idx])) |constell| {
+            //    try slice[idx].appendSlice(constell.toSlice());
+            //    _ = (&constell).shrink(0);
+            //}
         }
     }
     
