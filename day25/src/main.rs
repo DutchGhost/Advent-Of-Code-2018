@@ -13,6 +13,13 @@ struct Point {
 }
 
 impl Point {
+    fn manhatten(&self, other: &Self) -> i32 {
+        (self.x - other.x).abs()
+            + (self.y - other.y).abs()
+            + (self.z - other.z).abs()
+            + (self.q - other.q).abs()
+    }
+
     fn can_merge_with(&self, other: &ConstellationPoint) -> bool {
         match other {
             ConstellationPoint::Merged(v) => v.iter().any(|item| self.can_merge_with(item)),
@@ -37,28 +44,25 @@ impl ConstellationPoint {
     }
 }
 
-impl Point {
-    fn manhatten(&self, other: &Self) -> i32 {
-        (self.x - other.x).abs()
-            + (self.y - other.y).abs()
-            + (self.z - other.z).abs()
-            + (self.q - other.q).abs()
-    }
-}
-
 #[allow(clippy::many_single_char_names)]
 fn parse(s: &str) -> Vec<Vec<ConstellationPoint>> {
     s.lines()
         .map(|line| {
-            let mut line_spliiter = line.split(',');
+            let mut line_splitter = line.split(',');
 
-            let x = line_spliiter.next().unwrap().parse().unwrap();
-            let y = line_spliiter.next().unwrap().parse().unwrap();
-            let z = line_spliiter.next().unwrap().parse().unwrap();
-            let q = line_spliiter.next().unwrap().parse().unwrap();
+            let x = line_splitter.next().unwrap().parse().unwrap();
+            let y = line_splitter.next().unwrap().parse().unwrap();
+            let z = line_splitter.next().unwrap().parse().unwrap();
+            let q = line_splitter.next().unwrap().parse().unwrap();
 
             vec![ConstellationPoint::Point(Point { x, y, z, q })]
         }).collect()
+}
+
+fn can_merge(constellation: &[ConstellationPoint], to_check: &[ConstellationPoint]) -> bool {
+    constellation
+        .iter()
+        .any(|point| to_check.iter().any(|p| point.can_merge(p)))
 }
 
 #[aoc(2018, 25, 1)]
@@ -69,17 +73,18 @@ fn main(input: &str) -> usize {
 
     for (idx, constellation) in slice.iter().enumerate() {
         let mut constell = constellation.take();
-        for constellation2 in slice[..idx].iter() {
-            let constell2 = constellation2.take();
 
-            // If not mergable, set constellation2's constellation back to what it was.
-            if constell
-                .iter()
-                .any(|p| constell2.iter().any(|point| point.can_merge(p)))
-            {
-                constell.push(ConstellationPoint::Merged(constell2));
+        for to_check_constellation in slice[..idx].iter() {
+            let to_check_constell = to_check_constellation.take();
+
+            if to_check_constell.is_empty() {
+                continue;
+            }
+
+            if can_merge(&constell, &to_check_constell) {
+                constell.push(ConstellationPoint::Merged(to_check_constell));
             } else {
-                constellation2.set(constell2);
+                to_check_constellation.set(to_check_constell);
             }
         }
 
