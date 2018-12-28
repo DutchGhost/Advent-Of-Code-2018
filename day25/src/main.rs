@@ -1,4 +1,4 @@
-#![feature(cell_update, as_cell)]
+#![feature(as_cell)]
 
 use aoc::aoc;
 
@@ -40,7 +40,7 @@ impl ConstellationPoint {
             ConstellationPoint::Merged(v) => v.iter().any(|item| other.can_merge(item)),
 
             // We know `self` is a single Point, so call can_merge_with to recursively test what `other` is,
-            ConstellationPoint::Point(ref p) => p.can_merge_with(other),
+            ConstellationPoint::Point(p) => p.can_merge_with(other),
         }
     }
 }
@@ -70,20 +70,28 @@ fn can_merge(constellation: &[ConstellationPoint], to_check: &[ConstellationPoin
 fn main(input: &str) -> usize {
     let mut parsed = parse(input);
 
-    let slice = Cell::from_mut(parsed.as_mut_slice()).as_slice_of_cells();
+    // We use Cell's here to avoid borrow issues.
+    // The Cell allows to temporarily 'move out' of a borrow (replacing with an empty Vector in this case),
+    // which allows to mutate the Vectors contained in this slice while Iterating, without reference counting.
+    let constellations = Cell::from_mut(parsed.as_mut_slice()).as_slice_of_cells();
 
-    let mut start = 0;
+    let mut start_constellations = 0;
 
-    'outer: for (idx, constellation) in slice.iter().enumerate() {
+    for (idx, constellation) in constellations.iter().enumerate() {
         let mut constell = constellation.take();
-        for to_check_constellation in slice[start..idx].iter() {
+
+        for to_check_constellation in constellations[start_constellations..idx].iter() {
             let to_check_constell = to_check_constellation.take();
 
+            // If a 2 constellations can be merged, merge one into the other.
+            // After merging, move the empty constellation the the front of the constellations,
+            // and increment the start point of constellations that need to be checked for merging.
+            // This way, already empty (and thus merged) entries are skipped while checking.
             if can_merge(&constell, &to_check_constell) {
                 constell.push(ConstellationPoint::Merged(to_check_constell));
 
-                to_check_constellation.swap(&slice[start]);
-                start += 1;
+                to_check_constellation.swap(&constellations[start_constellations]);
+                start_constellations += 1;
             } else {
                 to_check_constellation.set(to_check_constell);
             }
