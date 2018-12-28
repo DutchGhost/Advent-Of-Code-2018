@@ -4,7 +4,7 @@ use aoc::aoc;
 
 use std::cell::Cell;
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 struct Point {
     x: i32,
     y: i32,
@@ -28,6 +28,7 @@ impl Point {
     }
 }
 
+#[derive(Debug)]
 enum ConstellationPoint {
     Merged(Vec<ConstellationPoint>),
     Point(Point),
@@ -71,18 +72,18 @@ fn main(input: &str) -> usize {
 
     let slice = Cell::from_mut(parsed.as_mut_slice()).as_slice_of_cells();
 
-    for (idx, constellation) in slice.iter().enumerate() {
+    let mut start = 0;
+
+    'outer: for (idx, constellation) in slice.iter().enumerate() {
         let mut constell = constellation.take();
-
-        for to_check_constellation in slice[..idx].iter() {
+        for to_check_constellation in slice[start..idx].iter() {
             let to_check_constell = to_check_constellation.take();
-
-            if to_check_constell.is_empty() {
-                continue;
-            }
 
             if can_merge(&constell, &to_check_constell) {
                 constell.push(ConstellationPoint::Merged(to_check_constell));
+
+                to_check_constellation.swap(&slice[start]);
+                start += 1;
             } else {
                 to_check_constellation.set(to_check_constell);
             }
@@ -90,6 +91,5 @@ fn main(input: &str) -> usize {
 
         constellation.set(constell);
     }
-
     parsed.into_iter().filter(|v| !v.is_empty()).count()
 }
