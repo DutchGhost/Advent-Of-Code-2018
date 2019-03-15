@@ -62,8 +62,8 @@ fn solve(
 
     loop {
         tick += 1;
-        let mut idles = Vec::new();
-
+        let mut idles: Vec<&mut Worker> = Vec::new();
+        
         for worker in workers.iter_mut() {
             match worker.poll() {
                 // Some task was completed.
@@ -97,6 +97,17 @@ fn solve(
 
         // We can't spawn new work yet!
         if idles.is_empty() {
+
+            let min_ticks_left = workers.iter().map(|task| task.ticks_left).min().unwrap();
+            for mut task in &mut workers {
+                task.ticks_left -= min_ticks_left;
+            }
+            tick += min_ticks_left;
+            // nll know's about this continue...
+            // it sees we are wrapping around to the next iteration of the loop {},
+            // so therefore we can borrow `workers` here as we please.
+            // (normally this would conflict because `idles` still holds references to items of `workers`,
+            // but in this entire if-block, `idles` isn't used.)
             continue;
         }
 
