@@ -134,18 +134,8 @@ fn main(input: &str) -> usize {
             .entry(task)
             .or_insert_with(HashSet::new)
             .insert(dependency);
-    }
 
-    // find the things which are not tasks, but *only* a dependency
-    let are_dependencies_only = task_dependency_map
-        .values()
-        .flat_map(|dependencies| dependencies.iter())
-        .filter(|dependency| !task_dependency_map.contains_key(dependency))
-        .cloned()
-        .collect::<Vec<_>>();
-
-    // The ones which are dependency only, but not a task, depend on an empty dependency list.
-    for dependency in are_dependencies_only {
+        // Make the dependency a task as well (if it's not a task already)
         task_dependency_map
             .entry(dependency)
             .or_insert_with(HashSet::new);
