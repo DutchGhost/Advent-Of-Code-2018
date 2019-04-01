@@ -213,7 +213,8 @@ fn main(input: &str) -> usize {
         parse(input)
             .chunks(3)
             .take_while(|chunk| chunk[0].starts_with("Before")),
-    ).filter(|line| match line {
+    )
+    .filter(|line| match line {
         [before, instruction, after] => {
             opcodes
                 .iter()
@@ -221,7 +222,8 @@ fn main(input: &str) -> usize {
                 .count()
                 >= 3
         }
-    }).count()
+    })
+    .count()
 }
 
 #[cfg(test)]

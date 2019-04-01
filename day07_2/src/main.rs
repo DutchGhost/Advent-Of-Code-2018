@@ -51,6 +51,8 @@ fn solve(
     number_of_workers: usize,
     default_time: usize,
 ) -> usize {
+    use trusted::container::container::scope;
+
     let mut workers = (0..number_of_workers)
         .map(|_| Worker::new(default_time))
         .collect::<Vec<_>>();
@@ -60,76 +62,81 @@ fn solve(
 
     let mut tick = 0;
 
-    loop {
-        tick += 1;
-        let mut idles: Vec<&mut Worker> = Vec::new();
-        
-        for worker in workers.iter_mut() {
-            match worker.poll() {
-                // Some task was completed.
-                // Push it to the output,
-                // Remove it as a dependency for all tasks that depend on the just completed task.
-                // This worker is now idle, push it to the idle workers.
-                Some(Poll::Ready(task_complete)) => {
-                    output.push(task_complete);
+    scope(workers.as_mut_slice(), |mut workers| {
+        let mut idles = Vec::new();
 
-                    for dependencies in tasks.values_mut() {
-                        dependencies.remove(&task_complete);
+        loop {
+            tick += 1;
+            for worker_idx in workers.range() {
+                match workers[worker_idx].poll() {
+                    // Some task was completed.
+                    // Push it to the output,
+                    // Remove it as a dependency for all tasks that depend on the just completed task.
+                    // This worker is now idle, push it to the idle workers.
+                    Some(Poll::Ready(task_complete)) => {
+                        output.push(task_complete);
+
+                        for dependencies in tasks.values_mut() {
+                            dependencies.remove(&task_complete);
+                        }
+
+                        idles.push(worker_idx);
                     }
 
-                    idles.push(worker);
-                }
+                    // this worker was idle, push it to the idles.
+                    None => {
+                        idles.push(worker_idx);
+                    }
 
-                // this worker was idle, push it to the idles.
-                None => {
-                    idles.push(worker);
+                    // this worker is still bussy. Let it do it's job
+                    Some(Poll::NotReady) => {}
                 }
+            }
 
-                // this worker is still bussy. Let it do it's job
-                Some(Poll::NotReady) => {}
+            // No more tasks, all workers are idle: We're done.
+            if tasks.is_empty() && idles.len() == number_of_workers {
+                break;
+            }
+
+            // We can't spawn new work yet!
+            if idles.is_empty() {
+                let min_ticks_left = workers
+                    .range()
+                    .into_iter()
+                    .map(|worker_idx| workers[worker_idx].ticks_left)
+                    .min()
+                    .unwrap();
+                for worker_idx in workers.range() {
+                    workers[worker_idx].ticks_left -= min_ticks_left;
+                }
+                tick += min_ticks_left;
+                // nll know's about this continue...
+                // it sees we are wrapping around to the next iteration of the loop {},
+                // so therefore we can borrow `workers` here as we please.
+                // (normally this would conflict because `idles` still holds references to items of `workers`,
+                // but in this entire if-block, `idles` isn't used.)
+                continue;
+            }
+
+            // Find the next tasks to be spawned.
+            // A task can be spawned if all its dependency's are satisfied.
+            spawnable_tasks.extend(
+                tasks
+                    .iter()
+                    .filter(|(_, dependencies)| dependencies.is_empty())
+                    .map(|(task, _)| *task),
+            );
+
+            spawnable_tasks.sort();
+
+            // Spawn the tasks on the workers.
+            // Remove the task from the tasks, because we started working on it.
+            for (worker_idx, task) in idles.drain(..).zip(spawnable_tasks.drain(..)) {
+                tasks.remove(&task);
+                workers[worker_idx].spawn(task);
             }
         }
-
-        // No more tasks, all workers are idle: We're done.
-        if tasks.is_empty() && idles.len() == number_of_workers {
-            break;
-        }
-
-        // We can't spawn new work yet!
-        if idles.is_empty() {
-
-            let min_ticks_left = workers.iter().map(|task| task.ticks_left).min().unwrap();
-            for mut task in &mut workers {
-                task.ticks_left -= min_ticks_left;
-            }
-            tick += min_ticks_left;
-            // nll know's about this continue...
-            // it sees we are wrapping around to the next iteration of the loop {},
-            // so therefore we can borrow `workers` here as we please.
-            // (normally this would conflict because `idles` still holds references to items of `workers`,
-            // but in this entire if-block, `idles` isn't used.)
-            continue;
-        }
-
-        // Find the next tasks to be spawned.
-        // A task can be spawned if all its dependency's are satisfied.
-        spawnable_tasks.extend(
-            tasks
-                .iter()
-                .filter(|(_, dependencies)| dependencies.is_empty())
-                .map(|(task, _)| *task),
-        );
-
-        spawnable_tasks.sort();
-
-        // Spawn the tasks on the workers.
-        // Remove the task from the tasks, because we started working on it.
-        for (worker, task) in idles.into_iter().zip(spawnable_tasks.drain(..)) {
-            tasks.remove(&task);
-            worker.spawn(task);
-        }
-    }
-
+    });
     tick - 1
 }
 

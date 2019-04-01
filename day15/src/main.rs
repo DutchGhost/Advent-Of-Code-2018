@@ -67,7 +67,8 @@ pub fn parse_area(s: &str) -> (Area, Vec<Unit>) {
                     'G' => Unit::Goblin(Goblin::new(x, y)),
                     _ => Unit::Elf(Elf::new(x, y)),
                 })
-        }).collect::<Vec<_>>();
+        })
+        .collect::<Vec<_>>();
 
     (area, units)
 }

@@ -133,7 +133,8 @@ fn main(input: &str) -> usize {
                 .count();
 
             (minute, frequency)
-        }).max_by_key(|&(_, frequency)| frequency)
+        })
+        .max_by_key(|&(_, frequency)| frequency)
         .map(|(minute, _)| minute as usize)
         .unwrap();
 

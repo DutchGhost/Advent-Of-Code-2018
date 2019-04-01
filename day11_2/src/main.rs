@@ -95,11 +95,13 @@ pub fn largest_between_size(
                 .map(|(x, y)| {
                     let power = area_power(x, y, size, v, &mut map);
                     (x, y, power)
-                }).max_by_key(|&(_, _, power)| power)
+                })
+                .max_by_key(|&(_, _, power)| power)
                 .unwrap();
 
             (x, y, power, size)
-        }).max_by_key(|&(_, _, power, _)| power)
+        })
+        .max_by_key(|&(_, _, power, _)| power)
         .unwrap()
 }
 

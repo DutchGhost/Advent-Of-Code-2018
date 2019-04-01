@@ -9,10 +9,10 @@ macro_rules! Struct2 {
             x: i64,
             y: i64,
         }
-        
+
         impl FromStr for $s {
             type Err = ();
-        
+
             #[inline]
             fn from_str(s: &str) -> Result<Self, Self::Err> {
                 let (x, y) = to_nums(s.chars());
@@ -83,7 +83,8 @@ fn main(input: &str) {
             }
 
             (n, maxx - minx + maxy - miny)
-        }).min_by_key(|&(_, bounds)| bounds)
+        })
+        .min_by_key(|&(_, bounds)| bounds)
         .unwrap();
 
     let mut map = vec![vec![b' '; 300]; 200];

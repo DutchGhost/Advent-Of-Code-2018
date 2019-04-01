@@ -15,5 +15,6 @@ fn main(input: &str) -> Option<isize> {
         .cycle()
         .scan(Cell::new(0), |frequency, n| {
             Some(frequency.update(|old| old + n))
-        }).find(|n| !set.insert(*n))
+        })
+        .find(|n| !set.insert(*n))
 }

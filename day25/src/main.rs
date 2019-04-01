@@ -57,7 +57,8 @@ fn parse(s: &str) -> Vec<Vec<ConstellationPoint>> {
             let q = line_splitter.next().unwrap().parse().unwrap();
 
             vec![ConstellationPoint::Point(Point { x, y, z, q })]
-        }).collect()
+        })
+        .collect()
 }
 
 fn can_merge(constellation: &[ConstellationPoint], to_check: &[ConstellationPoint]) -> bool {

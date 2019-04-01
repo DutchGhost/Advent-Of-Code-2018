@@ -93,7 +93,7 @@ fn main(input: &str) -> Option<usize> {
             1) compute the manhatten distance between the coordinate and the point,
             2) find the minimum manhattendistance, if there are ties: go to the next coordinate
                 If there are no ties, grab the point out
-        
+
         If the coordinate escapes the grid, add it to the map of inifintes.
         From the locationsmap, increment the points area counter.
     Lastly, iterate over the locationsmap, filter out the locations that are infinite, find the max, and return it.

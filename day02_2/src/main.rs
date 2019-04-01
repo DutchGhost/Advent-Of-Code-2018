@@ -35,7 +35,8 @@ fn main(input: &str) -> String {
             boxes[idx..]
                 .iter()
                 .find_map(|box2| IDMatcher::find_match(box1, box2))
-        }).next()
+        })
+        .next()
         .expect("Failed to find it.");
 
     format!("{}{}", common.s1, common.s2)

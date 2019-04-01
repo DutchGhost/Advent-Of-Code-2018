@@ -75,7 +75,8 @@ fn most_frequent_minute(schedule: &[Action], buffer: &mut Vec<SleepPeriod>) -> (
             let time = NaiveTime::from_hms(0, min as u32, 0);
             let frequency = buffer.iter().filter(|span| span.contains(time)).count();
             (min, frequency)
-        }).max_by_key(|&(_, frequency)| frequency)
+        })
+        .max_by_key(|&(_, frequency)| frequency)
         .unwrap()
 }
 
@@ -127,7 +128,8 @@ fn main(input: &str) -> usize {
             let (sleepiest_minute, frequency) = most_frequent_minute(&scheds, &mut buffer);
             buffer.clear();
             (guard, sleepiest_minute, frequency)
-        }).max_by_key(|&(_, _, most_frequent)| most_frequent)
+        })
+        .max_by_key(|&(_, _, most_frequent)| most_frequent)
         .map(|(guard, sleepiest_minute, _)| (guard, sleepiest_minute))
         .unwrap();
 

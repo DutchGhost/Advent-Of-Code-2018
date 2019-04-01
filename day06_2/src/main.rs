@@ -37,8 +37,10 @@ fn main(input: &str) -> usize {
                     let dist_y = (point.y - y).abs();
 
                     dist_x + dist_y
-                }).sum::<isize>()
-        }).filter(|&total_distance| total_distance < 10000)
+                })
+                .sum::<isize>()
+        })
+        .filter(|&total_distance| total_distance < 10000)
         .count()
 }
 
