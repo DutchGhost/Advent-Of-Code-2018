@@ -1,6 +1,10 @@
 use aoc::aoc;
 
-use hashbrown::{HashMap, HashSet};
+use std::collections::{HashSet};
+
+mod dependencygraph;
+use dependencygraph::{DependencyGraph, Dependents};
+
 
 fn parse(s: &str) -> (char, char) {
     let mut dependency = s.chars().skip(5);
@@ -9,7 +13,7 @@ fn parse(s: &str) -> (char, char) {
     (dependency.next().unwrap(), task.next().unwrap())
 }
 
-fn solve(mut tasks: HashMap<char, HashSet<char>>) -> String {
+fn solve(mut tasks: DependencyGraph<char, HashSet<char>>) -> String {
     let mut answer = String::new();
     let mut candidates: Vec<char> = Vec::new();
 
@@ -26,7 +30,7 @@ fn solve(mut tasks: HashMap<char, HashSet<char>>) -> String {
         candidates.clear();
         answer.push(task);
 
-        tasks.remove(&task);
+        tasks.remove_task(&task);
 
         for dependencies in tasks.values_mut() {
             dependencies.remove(&task);
@@ -38,22 +42,13 @@ fn solve(mut tasks: HashMap<char, HashSet<char>>) -> String {
 
 #[aoc(2018, 7, 1)]
 fn main(input: &str) -> String {
-    let mut task_dependency_map = HashMap::new();
+    let mut depgraph: DependencyGraph::<char, HashSet<char>> = DependencyGraph::new();
 
-    // add tasks and dependencies to the task_dependency_map
     for line in input.lines() {
         let (dependency, task) = parse(line);
-
-        task_dependency_map
-            .entry(task)
-            .or_insert_with(HashSet::new)
-            .insert(dependency);
-
-        // Make the dependency a task as well (if it's not a task already)
-        task_dependency_map
-            .entry(dependency)
-            .or_insert_with(HashSet::new);
+        depgraph.task(task).add_dependency(dependency);
+        depgraph.task(dependency);
     }
 
-    solve(task_dependency_map)
+    solve(depgraph)
 }
