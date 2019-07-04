@@ -2,7 +2,7 @@ use aoc::aoc;
 
 use chrono::naive::{NaiveDateTime, NaiveTime};
 
-use hashbrown::HashMap;
+use std::collections::HashMap;
 
 use std::str::FromStr;
 
