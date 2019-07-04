@@ -1,6 +1,6 @@
 use aoc::aoc;
 
-use hashbrown::HashMap;
+use std::collections::HashMap;
 
 #[aoc(2018, 2, 1)]
 fn main(input: &str) -> usize {

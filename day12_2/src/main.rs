@@ -1,6 +1,6 @@
 use aoc::aoc;
 
-use hashbrown::HashSet;
+use std::collections::HashSet;
 
 #[derive(Hash, Eq, PartialEq, Clone, Copy, Ord, PartialOrd)]
 enum Pot {

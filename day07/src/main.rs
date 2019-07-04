@@ -1,10 +1,9 @@
 use aoc::aoc;
 
-use std::collections::{HashSet};
+use std::collections::HashSet;
 
 mod dependencygraph;
 use dependencygraph::{DependencyGraph, Dependents};
-
 
 fn parse(s: &str) -> (char, char) {
     let mut dependency = s.chars().skip(5);
@@ -42,7 +41,7 @@ fn solve(mut tasks: DependencyGraph<char, HashSet<char>>) -> String {
 
 #[aoc(2018, 7, 1)]
 fn main(input: &str) -> String {
-    let mut depgraph: DependencyGraph::<char, HashSet<char>> = DependencyGraph::new();
+    let mut depgraph: DependencyGraph<char, HashSet<char>> = DependencyGraph::new();
 
     for line in input.lines() {
         let (dependency, task) = parse(line);

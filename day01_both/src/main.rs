@@ -1,7 +1,7 @@
 #![feature(cell_update, as_cell)]
 
 use aoc::aoc;
-use hashbrown::HashSet;
+use std::collections::HashSet;
 use std::cell::Cell;
 
 #[aoc(2018, 1, 3)]

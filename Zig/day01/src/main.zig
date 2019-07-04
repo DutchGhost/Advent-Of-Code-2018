@@ -5,7 +5,7 @@ const fmt = std.fmt;
 const input = @embedFile("../input.txt");
 
 fn solve(comptime N: type) N {
-    var splitter = mem.split(input, "\n");
+    var splitter = mem.separate(input, "\n");
     var sum = N(0);
 
     while(splitter.next()) |n| {

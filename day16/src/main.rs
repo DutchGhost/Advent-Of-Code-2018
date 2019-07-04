@@ -1,4 +1,3 @@
-#![feature(dbg_macro)]
 use aoc::aoc;
 
 macro_rules! assert_len {

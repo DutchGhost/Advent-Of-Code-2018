@@ -1,5 +1,7 @@
 use aoc::aoc;
 
+use std::collections::VecDeque;
+
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Ord, PartialOrd)]
 enum Cell {
     Sand,
@@ -47,16 +49,24 @@ fn parse(s: &str) -> Vec<Vein> {
     for line in s.lines() {
         let char_to_look_for = if line.starts_with('x') { 'y' } else { 'x' };
 
-        let end = line.chars().position(|c| c == ',').unwrap();
+        let end = line
+            .chars()
+            .position(|c| c == ',')
+            .expect("NO POSITION FOUND");
+        dbg!(&line[2..end]);
         let fst = line[2..end].parse().expect("NOO");
 
-        let start_scnd = line.chars().position(|c| c == char_to_look_for).unwrap();
+        let start_scnd = line
+            .chars()
+            .position(|c| c == char_to_look_for)
+            .expect("NO POS FOUND");
         let end_scnd_num = line.chars().position(|c| c == '.').unwrap();
+        dbg!(&line[start_scnd + 2..end_scnd_num]);
         let scnd =
             line[start_scnd + 2..end_scnd_num]
                 .parse()
                 .expect(&format!(r"{}\{}", file!(), line!()));
-        let last = line[end_scnd_num + 2..].parse().unwrap();
+        let last = line[end_scnd_num + 2..].parse().expect("BAR");
 
         if char_to_look_for == 'y' {
             veins.push(Vein::Vertical(fst, scnd, last));
@@ -72,14 +82,14 @@ use std::cmp::{max, min};
 
 #[aoc(2018, 17, 1)]
 fn main(input: &str) {
-    //     let input = "x=495, y=2..7
-    // y=7, x=495..501
-    // x=501, y=3..7
-    // x=498, y=2..4
-    // x=506, y=1..2
-    // x=498, y=10..13
-    // x=504, y=10..13
-    // y=13, x=498..504";
+    let input = "x=495, y=2..7
+y=7, x=495..501
+x=501, y=3..7
+x=498, y=2..4
+x=506, y=1..2
+x=498, y=10..13
+x=504, y=10..13
+y=13, x=498..504";
     let veins = parse(input);
 
     let mut max_x = 0;
@@ -122,177 +132,247 @@ fn main(input: &str) {
     grid[0][500] = Cell::WaterSpring;
     print_all(min_x - 2, &grid);
 
-    println!("\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n");
+    let mut deque = VecDeque::new();
 
-    for _ in 0..10_000 {
-        //let water_before = grid.iter().flat_map(|v| v.into_iter()).filter(|&&c| c == Cell::Water || c == Cell::DryWater).count();
+    //let (mut y, mut x): (isize, isize) = (0, 500);
 
-        for y in 0..max_y {
-            for x in min_x - 2..max_x {
-                match grid[y][x] {
-                    // found the spring, go down straight untill we reach something that isn't sand
-                    Cell::WaterSpring => {
-                        for going_down_y in (y + 1..) {
-                            if grid[going_down_y][x] != Cell::Sand {
-                                break;
-                            }
-                            grid[going_down_y][x] = Cell::DryWater;
-                        }
-                    }
+    deque.push_back((500, 0));
 
-                    // found a '|'. Check if we can flow.
-                    // flowing is allowed if the cell underneath the current is a `#` or a `~`.
-                    Cell::DryWater => {
-                        if has_ground(x, y, &grid) {
-                            match (can_flood_left(x, y, &grid), can_flood_right(x, y, &grid)) {
-                                (Some(x_offset_left), Some(x_offset_right)) => {
-                                    grid[y][x] = Cell::Water;
-                                    for item in grid[y][x_offset_left..x_offset_right].iter_mut() {
-                                        *item = Cell::Water;
-                                    }
-                                }
+    let mut n_pushed_left = 1;
 
-                                (Some(x_offset_left), None) => {
-                                    for item in grid[y][x_offset_left..x].iter_mut() {
-                                        *item = Cell::DryWater;
-                                    }
-                                }
-
-                                (None, Some(x_offset_right)) => {
-                                    for item in grid[y][x..x_offset_right].iter_mut() {
-                                        if *item != Cell::Clay {
-                                            *item = Cell::DryWater;
-                                        }
-                                    }
-                                }
-
-                                (None, None) => {}
-                            }
-                        }
-                        for going_down_y in (y + 1..max_y + 1) {
-                            if grid[going_down_y][x] != Cell::Sand {
-                                break;
-                            }
-                            grid[going_down_y][x] = Cell::DryWater;
-                        }
-                    }
-                    Cell::Sand => {
-                        if x > 0 && grid[y][x - 1] == Cell::DryWater {
-                            if has_ground(x - 1, y, &grid) {
-                                grid[y][x] = Cell::DryWater;
-                            } else if has_ground(x, y, &grid) {
-                                grid[y][x] = Cell::DryWater;
-                            }
-                        }
-
-                        if x + 1 < grid[0].len() && grid[y][x + 1] == Cell::DryWater {
-                            if has_ground(x + 1, y, &grid) {
-                                grid[y][x] = Cell::DryWater;
-                            } else if has_ground(x, y, &grid) {
-                                grid[y][x] = Cell::DryWater;
-                            }
-                        }
-                    }
-                    _ => {}
-                }
+    let mut iters = 0;
+    while let Some((x, y)) = deque.pop_back() {
+        if iters > 1000 {
+            break;
+        }
+        iters += 1;
+        //dbg!(&deque);
+        let mut pushed = 0;
+        for idxy in (y - 1..=y + 1) {
+            for idxx in (x - 1..=x + 1) {
+                //if (idxx, idxy) != (x, y) {
+                deque.push_back((idxx, idxy));
+                pushed += 1;
+                //}
             }
         }
 
-        // let water_after = grid.iter().flat_map(|v| v.into_iter()).filter(|&&c| c == Cell::Water || c == Cell::DryWater).count();
+        for _ in 0..pushed {
+            let (px, py) = deque.pop_back().unwrap();
+            // dbg!(&deque);
 
-        // if water_before == water_after {
-        //     break;
-        // }
+            match dbg!(is_valid(px, py, &grid)) {
+                Some(elem) => {
+                    grid[py as usize][px as usize] = elem;
+                    deque.push_front((px, py));
+                }
+                None => {
+                    eprintln!("NOT VALID");
+                }
+            }
+        }
     }
 
+    println!();
+    println!();
     print_all(min_x - 2, &grid);
 
-    let count = grid
-        .into_iter()
-        .flat_map(|v| v.into_iter())
-        .filter(|&c| c == Cell::Water || c == Cell::DryWater)
-        .count();
+    // println!("\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n");
 
-    println!("{:?}", count);
+    // for _ in 0..10_000 {
+    //     //let water_before = grid.iter().flat_map(|v| v.into_iter()).filter(|&&c| c == Cell::Water || c == Cell::DryWater).count();
+
+    //     for y in 0..max_y {
+    //         for x in min_x - 2..max_x {
+    //             match grid[y][x] {
+    //                 // found the spring, go down straight untill we reach something that isn't sand
+    //                 Cell::WaterSpring => {
+    //                     for going_down_y in (y + 1..) {
+    //                         if grid[going_down_y][x] != Cell::Sand {
+    //                             break;
+    //                         }
+    //                         grid[going_down_y][x] = Cell::DryWater;
+    //                     }
+    //                 }
+
+    //                 // found a '|'. Check if we can flow.
+    //                 // flowing is allowed if the cell underneath the current is a `#` or a `~`.
+    //                 Cell::DryWater => {
+    //                     if has_ground(x, y, &grid) {
+    //                         match (can_flood_left(x, y, &grid), can_flood_right(x, y, &grid)) {
+    //                             (Some(x_offset_left), Some(x_offset_right)) => {
+    //                                 grid[y][x] = Cell::Water;
+    //                                 for item in grid[y][x_offset_left..x_offset_right].iter_mut() {
+    //                                     *item = Cell::Water;
+    //                                 }
+    //                             }
+
+    //                             (Some(x_offset_left), None) => {
+    //                                 for item in grid[y][x_offset_left..x].iter_mut() {
+    //                                     *item = Cell::DryWater;
+    //                                 }
+    //                             }
+
+    //                             (None, Some(x_offset_right)) => {
+    //                                 for item in grid[y][x..x_offset_right].iter_mut() {
+    //                                     if *item != Cell::Clay {
+    //                                         *item = Cell::DryWater;
+    //                                     }
+    //                                 }
+    //                             }
+
+    //                             (None, None) => {}
+    //                         }
+    //                     }
+    //                     for going_down_y in (y + 1..max_y + 1) {
+    //                         if grid[going_down_y][x] != Cell::Sand {
+    //                             break;
+    //                         }
+    //                         grid[going_down_y][x] = Cell::DryWater;
+    //                     }
+    //                 }
+    //                 Cell::Sand => {
+    //                     if x > 0 && grid[y][x - 1] == Cell::DryWater {
+    //                         if has_ground(x - 1, y, &grid) {
+    //                             grid[y][x] = Cell::DryWater;
+    //                         } else if has_ground(x, y, &grid) {
+    //                             grid[y][x] = Cell::DryWater;
+    //                         }
+    //                     }
+
+    //                     if x + 1 < grid[0].len() && grid[y][x + 1] == Cell::DryWater {
+    //                         if has_ground(x + 1, y, &grid) {
+    //                             grid[y][x] = Cell::DryWater;
+    //                         } else if has_ground(x, y, &grid) {
+    //                             grid[y][x] = Cell::DryWater;
+    //                         }
+    //                     }
+    //                 }
+    //                 _ => {}
+    //             }
+    //         }
+    //     }
+
+    //     // let water_after = grid.iter().flat_map(|v| v.into_iter()).filter(|&&c| c == Cell::Water || c == Cell::DryWater).count();
+
+    //     // if water_before == water_after {
+    //     //     break;
+    //     // }
+    // }
+
+    // print_all(min_x - 2, &grid);
+
+    // let count = grid
+    //     .into_iter()
+    //     .flat_map(|v| v.into_iter())
+    //     .filter(|&c| c == Cell::Water || c == Cell::DryWater)
+    //     .count();
+
+    // println!("{:?}", count);
 }
 
-fn is_sand_and_not_water(cell: &Cell) -> bool {
-    *cell != Cell::Sand && !(*cell == Cell::DryWater || *cell == Cell::Water)
-}
-
-fn can_flood_left(x: usize, y: usize, grid: &[Vec<Cell>]) -> Option<usize> {
-    let mut ret = x;
-    for going_left_x in (0..=x).rev() {
-        if is_sand_and_not_water(&grid[y][going_left_x]) {
-            return Some(ret);
-        }
-
-        if !has_ground(going_left_x, y, &grid) {
+fn is_valid(x: isize, y: isize, grid: &[Vec<Cell>]) -> Option<Cell> {
+    // if the current (x, y) is Sand, DryWater or water, continue.
+    // else, just bail out.
+    //dbg!()
+    let _ = match grid.get(y as usize).and_then(|arr| arr.get(x as usize)) {
+        Some(Cell::Sand) | Some(Cell::DryWater) | Some(Cell::Water) | Some(Cell::WaterSpring) => {}
+        f => {
+            //     dbg!((x, y));
+            //dbg!(f);
             return None;
         }
+    };
 
-        ret = going_left_x;
+    // if the (x, y - 1) = Water, or Clay, the current one has a floor.
+    // if it's sand, it can fall.
+    if let Some(elem) = grid.get(y as usize + 1).and_then(|arr| arr.get(x as usize)) {
+        match elem {
+            Cell::Water | Cell::Clay => return Some(Cell::Water),
+            Cell::Sand => return Some(Cell::DryWater),
+            e => {}
+        }
     }
 
-    return None;
+    None
 }
+// fn is_sand_and_not_water(cell: &Cell) -> bool {
+//     *cell != Cell::Sand && !(*cell == Cell::DryWater || *cell == Cell::Water)
+// }
 
-fn can_flood_right(x: usize, y: usize, grid: &[Vec<Cell>]) -> Option<usize> {
-    let mut ret = x;
-    for going_right_x in x..grid[0].len() {
-        if is_sand_and_not_water(&grid[y][going_right_x]) {
-            return Some(ret);
-        }
+// fn can_flood_left(x: usize, y: usize, grid: &[Vec<Cell>]) -> Option<usize> {
+//     let mut ret = x;
+//     for going_left_x in (0..=x).rev() {
+//         if is_sand_and_not_water(&grid[y][going_left_x]) {
+//             return Some(ret);
+//         }
 
-        if !has_ground(going_right_x, y, &grid) {
-            return None;
-        }
-        ret = going_right_x
-    }
+//         if !has_ground(going_left_x, y, &grid) {
+//             return None;
+//         }
 
-    return None;
-}
+//         ret = going_left_x;
+//     }
 
-fn has_wall(x: usize, y: usize, grid: &[Vec<Cell>]) -> bool {
-    for going_to_left_x in (0..x).rev() {
-        if grid[y][going_to_left_x] == Cell::Clay {
-            return true;
-        }
-    }
+//     return None;
+// }
 
-    for going_to_right_x in x + 1..grid[0].len() {
-        if grid[y][going_to_right_x] == Cell::Clay {
-            return true;
-        }
-    }
+// fn can_flood_right(x: usize, y: usize, grid: &[Vec<Cell>]) -> Option<usize> {
+//     let mut ret = x;
+//     for going_right_x in x..grid[0].len() {
+//         if is_sand_and_not_water(&grid[y][going_right_x]) {
+//             return Some(ret);
+//         }
 
-    false
-}
+//         if !has_ground(going_right_x, y, &grid) {
+//             return None;
+//         }
+//         ret = going_right_x
+//     }
 
-fn has_2_walls(x: usize, y: usize, grid: &[Vec<Cell>]) -> bool {
-    let mut walls = 0;
-    for going_to_left_x in (0..x).rev() {
-        if grid[y][going_to_left_x] == Cell::Clay {
-            walls += 1;
-            break;
-        }
-    }
+//     return None;
+// }
 
-    for going_to_right_x in x + 1..grid[0].len() {
-        if grid[y][going_to_right_x] == Cell::Clay {
-            walls += 1;
-            break;
-        }
-    }
+// fn has_wall(x: usize, y: usize, grid: &[Vec<Cell>]) -> bool {
+//     for going_to_left_x in (0..x).rev() {
+//         if grid[y][going_to_left_x] == Cell::Clay {
+//             return true;
+//         }
+//     }
 
-    walls == 2
-}
-fn has_ground(x: usize, y: usize, grid: &[Vec<Cell>]) -> bool {
-    if y > grid.len() {
-        return false;
-    }
-    match grid[y + 1][x] {
-        Cell::Water | Cell::Clay => true,
-        _ => false,
-    }
-}
+//     for going_to_right_x in x + 1..grid[0].len() {
+//         if grid[y][going_to_right_x] == Cell::Clay {
+//             return true;
+//         }
+//     }
+
+//     false
+// }
+
+// fn has_2_walls(x: usize, y: usize, grid: &[Vec<Cell>]) -> bool {
+//     let mut walls = 0;
+//     for going_to_left_x in (0..x).rev() {
+//         if grid[y][going_to_left_x] == Cell::Clay {
+//             walls += 1;
+//             break;
+//         }
+//     }
+
+//     for going_to_right_x in x + 1..grid[0].len() {
+//         if grid[y][going_to_right_x] == Cell::Clay {
+//             walls += 1;
+//             break;
+//         }
+//     }
+
+//     walls == 2
+// }
+// fn has_ground(x: usize, y: usize, grid: &[Vec<Cell>]) -> bool {
+//     if y > grid.len() {
+//         return false;
+//     }
+//     match grid[y + 1][x] {
+//         Cell::Water | Cell::Clay => true,
+//         _ => false,
+//     }
+// }

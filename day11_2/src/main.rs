@@ -1,6 +1,6 @@
 use aoc::aoc;
 
-use hashbrown::{hash_map::Entry, HashMap};
+use std::collections::{hash_map::Entry, HashMap};
 use rayon::prelude::*;
 
 fn coordinates(

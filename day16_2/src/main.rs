@@ -1,4 +1,3 @@
-#![feature(dbg_macro)]
 use aoc::aoc;
 
 macro_rules! assert_len {
@@ -202,7 +201,7 @@ fn clamp<'a>(
     })
 }
 
-use hashbrown::{HashMap, HashSet};
+use std::collections::{HashMap, HashSet};
 
 fn run(mapper: &HashMap<usize, &&str>, opcode: &[usize], registers: &[usize]) -> [usize; 4] {
     match mapper.get(&opcode[0]).unwrap() {
