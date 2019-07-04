@@ -1,4 +1,3 @@
-#![feature(vecdeque_rotate)]
 use aoc::aoc;
 
 use std::collections::VecDeque;
