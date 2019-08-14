@@ -6,7 +6,7 @@ fn coordinates(xrange: Range<usize>, yrange: Range<usize>) -> impl Iterator<Item
     yrange.flat_map(move |y| xrange.clone().map(move |x| (x, y)))
 }
 
-fn power(x: usize, y: usize, serial_number: usize) -> isize {
+const fn power(x: usize, y: usize, serial_number: usize) -> isize {
     let rack_id = x + 10;
 
     let mut power_level = rack_id * y;
@@ -18,8 +18,6 @@ fn power(x: usize, y: usize, serial_number: usize) -> isize {
     power_level as isize - 5
 }
 
-const SIZE: usize = 301;
-
 /// A chunk of x, y with a size of `size`, having a total sum of `sum`
 #[derive(Debug)]
 struct Chunk {
@@ -30,7 +28,7 @@ struct Chunk {
 }
 
 impl Chunk {
-    fn new(x: usize, y: usize, size: usize, area_sum: isize) -> Self {
+    const fn new(x: usize, y: usize, size: usize, area_sum: isize) -> Self {
         Self {
             x,
             y,
@@ -39,16 +37,24 @@ impl Chunk {
         }
     }
 
-    fn area_sum(&self) -> isize {
+    const fn area_sum(&self) -> isize {
         self.area_sum
     }
 }
 
-fn sum_of_area(x: usize, y: usize, size: usize, table: &[Vec<isize>]) -> isize {
-    table[y][x] + table[y + size][x + size] - table[y][x + size] - table[y + size][x]
+macro_rules! index {
+    ($table:expr, [$y:expr]:[$x:expr]) => {
+        $table[{ $y } * SIZE + { $x }]
+    };
 }
 
-fn chunks_by_size<'a>(size: usize, grid: &'a [Vec<isize>]) -> impl Iterator<Item = Chunk> + 'a {
+const fn sum_of_area(x: usize, y: usize, size: usize, table: &[isize]) -> isize {
+    index!(table, [y]: [x]) + index!(table, [y + size]: [x + size])
+        - index!(table, [y]: [x + size])
+        - index!(table, [y + size]: [x])
+}
+
+fn chunks_by_size<'a>(size: usize, grid: &'a [isize]) -> impl Iterator<Item = Chunk> + 'a {
     let range = 0..SIZE - size;
 
     coordinates(range.clone(), range.clone()).map(move |(x, y)| {
@@ -57,20 +63,24 @@ fn chunks_by_size<'a>(size: usize, grid: &'a [Vec<isize>]) -> impl Iterator<Item
     })
 }
 
+const SIZE: usize = 301;
+
 /// Implementation based on a summed area table: https://en.wikipedia.org/wiki/Summed-area_table
 #[aoc(2018, 11, 2)]
 fn main(input: &str) -> Chunk {
     let serial_number = input.trim().parse::<usize>().unwrap();
 
-    let mut table = vec![vec![0; SIZE]; SIZE];
+    let mut table = vec![0; SIZE * SIZE];
 
     // Build the table.
     // Sum up the previous numbers for the current one.
     // No need to treat the first row/column special, since its padded by 1 with a 0 row and 0 column.
     for y in 1..SIZE {
         for x in 1..SIZE {
-            table[y][x] = power(x, y, serial_number) + table[y][x - 1] + table[y - 1][x]
-                - table[y - 1][x - 1];
+            index!(table, [y]: [x]) = power(x, y, serial_number)
+                + index!(table, [y]:[x - 1])
+                + index!(table, [y - 1]: [x])
+                - index!(table, [y - 1]:[x - 1]);
         }
     }
 
