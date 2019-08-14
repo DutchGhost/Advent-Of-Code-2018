@@ -129,7 +129,6 @@ impl SleepPattern {
     }
 }
 
-
 #[derive(Debug)]
 pub struct SleepPatterns {
     patterns: HashMap<Guard, SleepPattern>,
@@ -147,7 +146,6 @@ impl SleepPatterns {
 
 impl From<Observations<'_>> for SleepPatterns {
     fn from(observations: Observations<'_>) -> Self {
-
         let mut patterns = HashMap::new();
 
         let mut pattern = &mut Vec::new();

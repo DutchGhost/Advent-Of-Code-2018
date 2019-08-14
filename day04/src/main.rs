@@ -1,9 +1,9 @@
 use aoc::aoc;
-mod pattern;
 mod parse;
+mod pattern;
 
-use pattern::SleepPatterns;
 use parse::Observations;
+use pattern::SleepPatterns;
 
 #[aoc(2018, 4, 1)]
 fn main(input: &str) -> usize {
