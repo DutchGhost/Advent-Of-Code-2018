@@ -1,6 +1,6 @@
 const std = @import("std");
 const mem = std.mem;
-const input = @embedFile("../input.txt");
+const input = @embedFile("../input.txt") ++ ([1]u8){0};
 
 const builtin = @import("builtin");
 const Int = builtin.TypeInfo.Int;
@@ -91,11 +91,14 @@ pub fn main() void {
         var current = usize(0);
         var b = BitVec(26, 3).new();
 
-        for(line) |c| {
-            if (c == '\n' or c == '\r') { continue; }
-            var e = b.index(c - 97);
+        var index: usize = 0;
+        while(true) {
+            var c = line[index] -% 97;
+            if (c >= 26) { break; }
+            var e = b.index(c);
             defer e.deinit();
             e.element = math.add(u3, e.element, 1) catch e.element;
+            index += 1;
         }
 
         var iter = b.iter();
