@@ -1,8 +1,7 @@
-#![feature(as_cell)]
-
 use aoc::aoc;
 
-use std::cell::Cell;
+//use std::cell::Cell;
+use std::mem;
 
 #[derive(Clone, Debug)]
 struct Point {
@@ -69,36 +68,45 @@ fn can_merge(constellation: &[ConstellationPoint], to_check: &[ConstellationPoin
 
 #[aoc(2018, 25, 1)]
 fn main(input: &str) -> usize {
-    let mut parsed = parse(input);
-
-    // We use Cell's here to avoid borrow issues.
-    // The Cell allows to temporarily 'move out' of a borrow (replacing with an empty Vector in this case),
-    // which allows to mutate the Vectors contained in this slice while Iterating, without reference counting.
-    let constellations = Cell::from_mut(parsed.as_mut_slice()).as_slice_of_cells();
+    let parsed = parse(input);
+    
+    let mut constellations = parsed;
 
     let mut start_constellations = 0;
+    
+    // We use manual range loops here in combination with `[T]::split_at_mut`
+    // in order to avoid borrow issues.
+    // The slice is splitted in constellations that are already checked, and
+    // thus possible merge candidates, and constellations that can be merged
+    // into.
+    //
+    // Loop over the possible mergeable constellations, if they can merge with
+    // the first constellation of the constellations that can be merged into,
+    // merge them.
+    // Merging:
+    //  - Replace the mergeable constellation with an empty Vec (moving out)
+    //  - Push the moved out constellation onto the constellation to merge into,
+    //  - Swap the index of the merged constellation with the start of the mergeable
+    //      constellations.
+    //  - Increase the start of the mergeable constellations
+    //
+    //  This way, all the constellations merged from will pile up from the beginning.
+    for idx in 0..constellations.len() {
+        let (mergeable_candidates, merge_into) = constellations.split_at_mut(idx);
+        
+        let constell = &mut merge_into[0];
+        
+        for idx in start_constellations..idx {
+            if can_merge(constell, &mergeable_candidates[idx]) {
+            
+                let found_constell = mem::replace(&mut mergeable_candidates[idx], Vec::new());
+                constell.push(ConstellationPoint::Merged(found_constell));
+                    
 
-    for (idx, constellation) in constellations.iter().enumerate() {
-        let mut constell = constellation.take();
-
-        for to_check_constellation in constellations[start_constellations..idx].iter() {
-            let to_check_constell = to_check_constellation.take();
-
-            // If a 2 constellations can be merged, merge one into the other.
-            // After merging, move the empty constellation the the front of the constellations,
-            // and increment the start point of constellations that need to be checked for merging.
-            // This way, already empty (and thus merged) entries are skipped while checking.
-            if can_merge(&constell, &to_check_constell) {
-                constell.push(ConstellationPoint::Merged(to_check_constell));
-
-                to_check_constellation.swap(&constellations[start_constellations]);
+                mergeable_candidates.swap(start_constellations, idx);
                 start_constellations += 1;
-            } else {
-                to_check_constellation.set(to_check_constell);
             }
-        }
-
-        constellation.set(constell);
+        } 
     }
-    parsed.into_iter().filter(|v| !v.is_empty()).count()
+    constellations.len() - start_constellations
 }
