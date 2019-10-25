@@ -1,6 +1,7 @@
 use aoc::aoc;
+mod merge;
+use merge::Merge;
 
-//use std::cell::Cell;
 use std::mem;
 
 #[derive(Clone, Debug)]
@@ -11,19 +12,21 @@ struct Point {
     q: i32,
 }
 
+impl Merge<ConstellationPoint> for Point {
+    fn can_merge(&self, with: &ConstellationPoint) -> bool {
+        match with {
+            ConstellationPoint::Merged(v) => self.can_merge(&v[..]),
+            ConstellationPoint::Point(p) => self.manhatten(&p) <= 3,
+        }
+    }
+}
+
 impl Point {
     fn manhatten(&self, other: &Self) -> i32 {
         (self.x - other.x).abs()
             + (self.y - other.y).abs()
             + (self.z - other.z).abs()
             + (self.q - other.q).abs()
-    }
-
-    fn can_merge_with(&self, other: &ConstellationPoint) -> bool {
-        match other {
-            ConstellationPoint::Merged(v) => v.iter().any(|item| self.can_merge_with(item)),
-            ConstellationPoint::Point(p) => self.manhatten(p) <= 3,
-        }
     }
 }
 
@@ -33,13 +36,13 @@ enum ConstellationPoint {
     Point(Point),
 }
 
-impl ConstellationPoint {
-    fn can_merge(&self, other: &Self) -> bool {
+impl Merge<ConstellationPoint> for ConstellationPoint {
+    fn can_merge(&self, other: &ConstellationPoint) -> bool {
         match self {
-            ConstellationPoint::Merged(v) => v.iter().any(|item| other.can_merge(item)),
+            ConstellationPoint::Merged(v) => other.can_merge(&v[..]),
 
             // We know `self` is a single Point, so call can_merge_with to recursively test what `other` is,
-            ConstellationPoint::Point(p) => p.can_merge_with(other),
+            ConstellationPoint::Point(p) => p.can_merge(other),
         }
     }
 }
@@ -60,20 +63,14 @@ fn parse(s: &str) -> Vec<Vec<ConstellationPoint>> {
         .collect()
 }
 
-fn can_merge(constellation: &[ConstellationPoint], to_check: &[ConstellationPoint]) -> bool {
-    constellation
-        .iter()
-        .any(|point| to_check.iter().any(|p| point.can_merge(p)))
-}
-
 #[aoc(2018, 25, 1)]
 fn main(input: &str) -> usize {
     let parsed = parse(input);
-    
+
     let mut constellations = parsed;
 
     let mut start_constellations = 0;
-    
+
     // We use manual range loops here in combination with `[T]::split_at_mut`
     // in order to avoid borrow issues.
     // The slice is splitted in constellations that are already checked, and
@@ -93,20 +90,18 @@ fn main(input: &str) -> usize {
     //  This way, all the constellations merged from will pile up from the beginning.
     for idx in 0..constellations.len() {
         let (mergeable_candidates, merge_into) = constellations.split_at_mut(idx);
-        
+
         let constell = &mut merge_into[0];
-        
+
         for idx in start_constellations..idx {
-            if can_merge(constell, &mergeable_candidates[idx]) {
-            
+            if constell[..].can_merge(&mergeable_candidates[idx]) {
                 let found_constell = mem::replace(&mut mergeable_candidates[idx], Vec::new());
                 constell.push(ConstellationPoint::Merged(found_constell));
-                    
 
                 mergeable_candidates.swap(start_constellations, idx);
                 start_constellations += 1;
             }
-        } 
+        }
     }
     constellations.len() - start_constellations
 }
